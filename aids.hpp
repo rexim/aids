@@ -77,7 +77,7 @@ namespace aids
 
     Mator mator;
 
-    template <size_t Capacity = 640_Kb>
+    template <size_t Capacity = 640_KiB>
     struct Region
     {
         size_t size = 0;

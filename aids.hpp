@@ -1,10 +1,11 @@
 #ifndef AIDS_HPP_
 #define AIDS_HPP_
 
+#include <cctype>
+#include <cerrno>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <cerrno>
 
 namespace aids
 {
@@ -60,6 +61,54 @@ namespace aids
     String operator "" _s(const char *data, size_t size)
     {
         return { size, data };
+    }
+
+    String chop_by_delim(String *s, char delim)
+    {
+        if (s == nullptr || s->size == 0) {
+            return {0};
+        }
+
+        size_t i = 0;
+        while (i < s->size && s->data[i] != delim)
+            ++i;
+
+        String result = {
+            .size = i,
+            .data = s->data
+        };
+
+        if (i == s->size) {
+            s->data += s->size;
+            s->size = 0;
+        } else {
+            s->data += i + 1;
+            s->size -= i + 1;
+        }
+
+        return result;
+    }
+
+    String trim_begin(String s)
+    {
+        while (s.size > 0 && isspace(*s.data)) {
+            s.size -= 1;
+            s.data += 1;
+        }
+        return s;
+    }
+
+    String trim_end(String s)
+    {
+        while (s.size > 0 && isspace(*(s.data + s.size - 1))) {
+            s.size -= 1;
+        }
+        return s;
+    }
+
+    String trim(String s)
+    {
+        return trim_begin(trim_end(s));
     }
 
     ////////////////////////////////////////////////////////////

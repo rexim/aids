@@ -45,6 +45,9 @@ namespace aids
     ////////////////////////////////////////////////////////////
     // ALLOCATOR
     ////////////////////////////////////////////////////////////
+    // Ator  = Allocator (like Ctor or Dtor)
+    // Mator = Malloc Ator
+    ////////////////////////////////////////////////////////////
 
     constexpr unsigned long long operator ""_KiB (unsigned long long s)
     {
@@ -109,6 +112,15 @@ namespace aids
             .size = strlen(data),
             .data = data
         };
+        return result;
+    }
+
+    template <typename Ator = Mator>
+    const char *cstr_of_string(String s, Ator *ator = &mator)
+    {
+        char *result = (char *)alloc(ator, s.size + 1);
+        memcpy(result, s.data, s.size);
+        result[s.size] = '\0';
         return result;
     }
 

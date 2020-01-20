@@ -56,7 +56,19 @@ namespace aids
         {
             std::free((void*) data);
         }
+
     };
+
+    bool operator==(String a, String b)
+    {
+        if (a.size != b.size) return false;
+        return memcmp(a.data, b.data, a.size) == 0;
+    }
+
+    bool operator!=(String a, String b)
+    {
+        return !(a == b);
+    }
 
     String operator "" _s(const char *data, size_t size)
     {

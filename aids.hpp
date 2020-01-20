@@ -63,6 +63,8 @@ namespace aids
 
     struct Mator {};
 
+    // FIXME: alloc result should be templated
+
     void *alloc(Mator *, size_t size)
     {
         return malloc(size);
@@ -100,6 +102,15 @@ namespace aids
         size_t size;
         const char *data;
     };
+
+    String string_of_cstr(const char *data)
+    {
+        String result = {
+            .size = strlen(data),
+            .data = data
+        };
+        return result;
+    }
 
     template <typename Ator = Mator>
     void free(String s, Ator *ator = &mator)

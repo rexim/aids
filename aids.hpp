@@ -134,6 +134,19 @@ namespace aids
         return { size, data };
     }
 
+    template <typename Ator = Mator>
+    String copy(String s, Ator *ator = &mator)
+    {
+        String result = {
+            .size = s.size,
+            .data = (const char *) alloc(ator, s.size)
+        };
+
+        memcpy((void*) result.data, s.data, result.size);
+
+        return result;
+    }
+
     String chop_by_delim(String *s, char delim)
     {
         if (s == nullptr || s->size == 0) {

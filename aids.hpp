@@ -46,19 +46,19 @@ namespace aids
     // ALLOCATOR
     ////////////////////////////////////////////////////////////
 
-    constexpr unsigned long long operator ""_Kb (unsigned long long s)
+    constexpr unsigned long long operator ""_KiB (unsigned long long s)
     {
         return s * 1024;
     }
 
-    constexpr unsigned long long operator ""_Mb (unsigned long long s)
+    constexpr unsigned long long operator ""_MiB (unsigned long long s)
     {
-        return s * 1024_Kb;
+        return s * 1024_KiB;
     }
 
-    constexpr unsigned long long operator ""_Gb (unsigned long long s)
+    constexpr unsigned long long operator ""_GiB (unsigned long long s)
     {
-        return s * 1024_Mb;
+        return s * 1024_MiB;
     }
 
     struct Mator {};

@@ -1,8 +1,10 @@
 #ifndef AIDS_HPP_
 #define AIDS_HPP_
 
+#include <cassert>
 #include <cctype>
 #include <cerrno>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -44,20 +46,50 @@ namespace aids
     // ALLOCATOR
     ////////////////////////////////////////////////////////////
 
-    struct Mallocator
+    constexpr unsigned long long operator ""_Kb (unsigned long long s)
     {
-        void *alloc(size_t size)
-        {
-            return malloc(size);
-        }
+        return s * 1024;
+    }
 
-        void free(void *data, size_t)
-        {
-            std::free(data);
-        }
+    constexpr unsigned long long operator ""_Mb (unsigned long long s)
+    {
+        return s * 1024_Kb;
+    }
+
+    constexpr unsigned long long operator ""_Gb (unsigned long long s)
+    {
+        return s * 1024_Mb;
+    }
+
+    struct Mator {};
+
+    void *alloc(Mator *, size_t size)
+    {
+        return malloc(size);
+    }
+
+    void free(Mator *, void *data, size_t)
+    {
+        std::free(data);
+    }
+
+    Mator mator;
+
+    template <size_t Capacity = 640_Kb>
+    struct Region
+    {
+        size_t size = 0;
+        uint8_t data[Capacity];
     };
 
-    Mallocator mallocator;
+    template <size_t Capacity>
+    void *alloc(Region<Capacity> *region, size_t size)
+    {
+        assert(size + region->size <= Capacity);
+        void *result = region->data + region->size;
+        region->size += size;
+        return result;
+    }
 
     ////////////////////////////////////////////////////////////
     // STRING
@@ -69,10 +101,10 @@ namespace aids
         const char *data;
     };
 
-    template <typename Allocator = Mallocator>
-    void free(String s, Allocator *allocator = &mallocator)
+    template <typename Ator = Mator>
+    void free(String s, Ator *ator = &mator)
     {
-        allocator->free((void*) s.data, s.size);
+        free(ator, (void*) s.data, s.size);
     }
 
     bool operator==(String a, String b)
@@ -208,9 +240,9 @@ namespace aids
     // FILE
     ////////////////////////////////////////////////////////////
 
-    template <typename Allocator = Mallocator>
+    template <typename Ator = Mator>
     Result<String, Errno> read_whole_file(const char *filename,
-                                          Allocator *allocator = &mallocator)
+                                          Ator *ator = &mator)
     {
         FILE *f = fopen(filename, "rb");
         if (!f) return result_errno<String>();
@@ -225,7 +257,7 @@ namespace aids
         err = fseek(f, 0, SEEK_SET);
         if (err < 0) return result_errno<String>();
 
-        void *data = allocator->alloc(size);
+        void *data = alloc(ator, size);
         if (data == nullptr) return result_errno<String>();
 
         size_t read_size = fread(data, 1, size, f);

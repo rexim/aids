@@ -41,6 +41,25 @@ namespace aids
     }
 
     ////////////////////////////////////////////////////////////
+    // ALLOCATOR
+    ////////////////////////////////////////////////////////////
+
+    struct Mallocator
+    {
+        void *alloc(size_t size)
+        {
+            return malloc(size);
+        }
+
+        void free(void *data, size_t)
+        {
+            std::free(data);
+        }
+    };
+
+    Mallocator mallocator;
+
+    ////////////////////////////////////////////////////////////
     // STRING
     ////////////////////////////////////////////////////////////
 
@@ -48,16 +67,13 @@ namespace aids
     {
         size_t size;
         const char *data;
-
-        // NOTE: this was not made a dtor because it is designed to be
-        // used along with defer() to give you more flexible control
-        // over the string's lifetime.
-        void free()
-        {
-            std::free((void*) data);
-        }
-
     };
+
+    template <typename Allocator = Mallocator>
+    void free(String s, Allocator *allocator = &mallocator)
+    {
+        allocator->free((void*) s.data, s.size);
+    }
 
     bool operator==(String a, String b)
     {
@@ -192,7 +208,9 @@ namespace aids
     // FILE
     ////////////////////////////////////////////////////////////
 
-    Result<String, Errno> read_whole_file(const char *filename)
+    template <typename Allocator = Mallocator>
+    Result<String, Errno> read_whole_file(const char *filename,
+                                          Allocator *allocator = &mallocator)
     {
         FILE *f = fopen(filename, "rb");
         if (!f) return result_errno<String>();
@@ -207,7 +225,7 @@ namespace aids
         err = fseek(f, 0, SEEK_SET);
         if (err < 0) return result_errno<String>();
 
-        void *data = malloc(size);
+        void *data = allocator->alloc(size);
         if (data == nullptr) return result_errno<String>();
 
         size_t read_size = fread(data, 1, size, f);

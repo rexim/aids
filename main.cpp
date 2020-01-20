@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
     auto content = result.unwrap;
-    defer(content.free());
+    defer(free(content));
 
     println(stdout, content);
 

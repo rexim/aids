@@ -238,6 +238,14 @@ namespace aids
         return a < b ? a : b;
     }
 
+    String take(String s, size_t n)
+    {
+        return {
+            .size = min(n, s.size),
+            .data = s.data
+        };
+    }
+
     ////////////////////////////////////////////////////////////
     // PRINT
     ////////////////////////////////////////////////////////////

@@ -246,6 +246,16 @@ namespace aids
         };
     }
 
+    String drop(String s, size_t n)
+    {
+        if (n > s.size) return { .size = 0 };
+
+        return {
+            .size = s.size - n,
+            .data = s.data + n
+        };
+    }
+
     ////////////////////////////////////////////////////////////
     // PRINT
     ////////////////////////////////////////////////////////////

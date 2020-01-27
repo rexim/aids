@@ -68,9 +68,11 @@ namespace aids
 
     // FIXME: alloc result should be templated
 
-    void *alloc(Mator *, size_t size)
+    Result<void*, Errno> alloc(Mator *, size_t size)
     {
-        return malloc(size);
+        void *result = malloc(size);
+        if (result == nullptr) return result_errno<void*>();
+        return { .unwrap = result };
     }
 
     void free(Mator *, void *data, size_t)
@@ -88,12 +90,19 @@ namespace aids
     };
 
     template <size_t Capacity>
-    void *alloc(Region<Capacity> *region, size_t size)
+    Result<void*, Errno> alloc(Region<Capacity> *region, size_t size)
     {
-        assert(size + region->size <= Capacity);
+        if (size + region->size > Capacity) {
+            return {
+                .is_error = true,
+                .error = { ENOMEM }
+            };
+        }
+
         void *result = region->data + region->size;
         region->size += size;
-        return result;
+
+        return { .unwrap = result };
     }
 
     ////////////////////////////////////////////////////////////
@@ -116,12 +125,20 @@ namespace aids
     }
 
     template <typename Ator = Mator>
-    const char *cstr_of_string(String s, Ator *ator = &mator)
+    Result<const char *, Errno> cstr_of_string(String s, Ator *ator = &mator)
     {
-        char *result = (char *)alloc(ator, s.size + 1);
-        memcpy(result, s.data, s.size);
-        result[s.size] = '\0';
-        return result;
+        auto result = alloc(ator, s.size + 1);
+        if (result.is_error) {
+            return {
+                .is_error = true,
+                .error = result.error
+            };
+        }
+        char* cstr = (char*)result.unwrap;
+
+        memcpy((void *)cstr, s.data, s.size);
+        cstr[s.size] = '\0';
+        return { .unwrap = cstr };
     }
 
     template <typename Ator = Mator>
@@ -147,16 +164,24 @@ namespace aids
     }
 
     template <typename Ator = Mator>
-    String copy(String s, Ator *ator = &mator)
+    Result<String, Errno> copy(String s, Ator *ator = &mator)
     {
+        auto memory = alloc(ator, s.size);
+        if (memory.is_error) {
+            return {
+                .is_error = true,
+                .error = memory.error
+            };
+        }
+
         String result = {
             .size = s.size,
-            .data = (const char *) alloc(ator, s.size)
+            .data = (const char *) memory.unwrap
         };
 
         memcpy((void*) result.data, s.data, result.size);
 
-        return result;
+        return {.unwrap = result};
     }
 
     String chop_by_delim(String *s, char delim)
@@ -293,10 +318,10 @@ namespace aids
         err = fseek(f, 0, SEEK_SET);
         if (err < 0) return result_errno<String>();
 
-        void *data = alloc(ator, size);
-        if (data == nullptr) return result_errno<String>();
+        auto data = alloc(ator, size);
+        if (data.is_error) return { .is_error = true, .error = data.error };
 
-        size_t read_size = fread(data, 1, size, f);
+        size_t read_size = fread(data.unwrap, 1, size, f);
         if (read_size < size && ferror(f)) {
             return result_errno<String>();
         }
@@ -305,7 +330,7 @@ namespace aids
             .is_error = false,
             .unwrap = {
                 .size = read_size,
-                .data = (const char *)data,
+                .data = (const char *)data.unwrap,
             }
         };
     }

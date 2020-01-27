@@ -261,6 +261,11 @@ namespace aids
         std::fprintf(stream, "%f", f);
     }
 
+    void print1(FILE *stream, unsigned long long x)
+    {
+        std::fprintf(stream, "%lld", x);
+    }
+
     template <typename ... Types>
     void print(FILE *stream, Types... args)
     {

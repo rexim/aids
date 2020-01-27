@@ -232,6 +232,12 @@ namespace aids
         return trim_begin(trim_end(s));
     }
 
+    template <typename T>
+    T min(T a, T b)
+    {
+        return a < b ? a : b;
+    }
+
     ////////////////////////////////////////////////////////////
     // PRINT
     ////////////////////////////////////////////////////////////

@@ -66,12 +66,11 @@ namespace aids
 
     struct Mator {};
 
-    // FIXME: alloc result should be templated
-
-    Result<void*, Errno> alloc(Mator *, size_t size)
+    template <typename T>
+    Result<T, Errno> alloc(Mator *, size_t size)
     {
-        void *result = malloc(size);
-        if (result == nullptr) return result_errno<void*>();
+        T result = (T) malloc(size);
+        if (result == nullptr) return result_errno<T>();
         return { .unwrap = result };
     }
 
@@ -89,8 +88,8 @@ namespace aids
         uint8_t data[Capacity];
     };
 
-    template <size_t Capacity>
-    Result<void*, Errno> alloc(Region<Capacity> *region, size_t size)
+    template <typename T, size_t Capacity>
+    Result<T, Errno> alloc(Region<Capacity> *region, size_t size)
     {
         if (size + region->size > Capacity) {
             return {
@@ -99,7 +98,7 @@ namespace aids
             };
         }
 
-        void *result = region->data + region->size;
+        T result = (T) (region->data + region->size);
         region->size += size;
 
         return { .unwrap = result };
@@ -127,7 +126,7 @@ namespace aids
     template <typename Ator = Mator>
     Result<const char *, Errno> cstr_of_string(String s, Ator *ator = &mator)
     {
-        auto result = alloc(ator, s.size + 1);
+        auto result = alloc<const char *>(ator, s.size + 1);
         if (result.is_error) {
             return {
                 .is_error = true,
@@ -347,7 +346,7 @@ namespace aids
         err = fseek(f, 0, SEEK_SET);
         if (err < 0) return result_errno<String>();
 
-        auto data = alloc(ator, size);
+        auto data = alloc<char*>(ator, size);
         if (data.is_error) return { .is_error = true, .error = data.error };
 
         size_t read_size = fread(data.unwrap, 1, size, f);

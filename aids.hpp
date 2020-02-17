@@ -23,6 +23,13 @@ namespace aids
         Error error;
     };
 
+    template <typename Error>
+    struct Result<void, Error>
+    {
+        bool is_error;
+        Error error;
+    };
+
     struct Errno
     {
         int unwrap;
@@ -39,6 +46,44 @@ namespace aids
         return {
             .is_error = true,
             .error = { errno }
+        };
+    }
+
+    template <typename T, typename Error, typename... Message>
+    T unwrap_or_panic(Result<T, Error> result, Message... message)
+    {
+        if (result.is_error) {
+            println(stdout, "[PANIC] ", message..., ": ", result.error);
+            abort();
+        }
+
+        return result.unwrap;
+    }
+
+    template <typename Error, typename... Message>
+    void unwrap_or_panic(Result<void, Error> result, Message... message)
+    {
+        if (result.is_error) {
+            println(stdout, "[PANIC] ", message..., ": ", result.error);
+            abort();
+        }
+    }
+
+    template <typename U, typename T, typename Error>
+    Result<U, Error> refail(Result<T, Error> result)
+    {
+        return {
+            .is_error = result.is_error,
+            .error = result.error
+        };
+    }
+
+    template <typename T, typename Error>
+    Result<T, Error> fail(Error error)
+    {
+        return {
+            .is_error = true,
+            .error = error
         };
     }
 
@@ -92,10 +137,7 @@ namespace aids
     Result<T, Errno> alloc(Region<Capacity> *region, size_t size)
     {
         if (size + region->size > Capacity) {
-            return {
-                .is_error = true,
-                .error = { ENOMEM }
-            };
+            return fail<T, Errno>({ ENOMEM });
         }
 
         T result = (T) (region->data + region->size);
@@ -127,12 +169,8 @@ namespace aids
     Result<const char *, Errno> cstr_of_string(String s, Ator *ator = &mator)
     {
         auto result = alloc<const char *>(ator, s.size + 1);
-        if (result.is_error) {
-            return {
-                .is_error = true,
-                .error = result.error
-            };
-        }
+        if (result.is_error) return result;
+
         char* cstr = (char*)result.unwrap;
 
         memcpy((void *)cstr, s.data, s.size);
@@ -167,10 +205,7 @@ namespace aids
     {
         auto memory = alloc(ator, s.size);
         if (memory.is_error) {
-            return {
-                .is_error = true,
-                .error = memory.error
-            };
+            return refail<String>(memory);
         }
 
         String result = {
@@ -347,7 +382,7 @@ namespace aids
         if (err < 0) return result_errno<String>();
 
         auto data = alloc<char*>(ator, size);
-        if (data.is_error) return { .is_error = true, .error = data.error };
+        if (data.is_error) return refail<String>(data);
 
         size_t read_size = fread(data.unwrap, 1, size, f);
         if (read_size < size && ferror(f)) {
@@ -405,10 +440,15 @@ namespace aids
     };
 
     template <typename T, size_t Capacity>
-    void push(Fixed_Stack<T, Capacity> *stack, T element)
+    Result<void, Errno> push(Fixed_Stack<T, Capacity> *stack, T element)
     {
-        assert(stack->size < Capacity);
+        if (stack->size >= Capacity) {
+            return fail<void, Errno>({ ENOMEM });
+        }
+
         stack->elements[stack->size++] = element;
+
+        return {};
     }
 }
 

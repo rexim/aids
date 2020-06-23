@@ -12,6 +12,22 @@
 namespace aids
 {
     ////////////////////////////////////////////////////////////
+    // ALGORITHM
+    ////////////////////////////////////////////////////////////
+
+    template <typename T>
+    T min(T a, T b)
+    {
+        return a < b ? a : b;
+    }
+
+    template <typename T>
+    T max(T a, T b)
+    {
+        return a > b ? a : b;
+    }
+
+    ////////////////////////////////////////////////////////////
     // RESULT
     ////////////////////////////////////////////////////////////
 
@@ -264,12 +280,6 @@ namespace aids
     String trim(String s)
     {
         return trim_begin(trim_end(s));
-    }
-
-    template <typename T>
-    T min(T a, T b)
-    {
-        return a < b ? a : b;
     }
 
     String take(String s, size_t n)

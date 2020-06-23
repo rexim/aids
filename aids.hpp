@@ -166,15 +166,15 @@ namespace aids
     // STRING
     ////////////////////////////////////////////////////////////
 
-    struct String
+    struct String_View
     {
         size_t size;
         const char *data;
     };
 
-    String string_of_cstr(const char *data)
+    String_View string_of_cstr(const char *data)
     {
-        String result = {
+        String_View result = {
             .size = strlen(data),
             .data = data
         };
@@ -182,7 +182,7 @@ namespace aids
     }
 
     template <typename Ator = Mator>
-    Result<const char *, Errno> cstr_of_string(String s, Ator *ator = &mator)
+    Result<const char *, Errno> cstr_of_string(String_View s, Ator *ator = &mator)
     {
         auto result = alloc<const char *>(ator, s.size + 1);
         if (result.is_error) return result;
@@ -195,36 +195,36 @@ namespace aids
     }
 
     template <typename Ator = Mator>
-    void free(String s, Ator *ator = &mator)
+    void free(String_View s, Ator *ator = &mator)
     {
         free(ator, (void*) s.data, s.size);
     }
 
-    bool operator==(String a, String b)
+    bool operator==(String_View a, String_View b)
     {
         if (a.size != b.size) return false;
         return memcmp(a.data, b.data, a.size) == 0;
     }
 
-    bool operator!=(String a, String b)
+    bool operator!=(String_View a, String_View b)
     {
         return !(a == b);
     }
 
-    String operator "" _s(const char *data, size_t size)
+    String_View operator "" _s(const char *data, size_t size)
     {
         return { size, data };
     }
 
     template <typename Ator = Mator>
-    Result<String, Errno> copy(String s, Ator *ator = &mator)
+    Result<String_View, Errno> copy(String_View s, Ator *ator = &mator)
     {
         auto memory = alloc(ator, s.size);
         if (memory.is_error) {
-            return refail<String>(memory);
+            return refail<String_View>(memory);
         }
 
-        String result = {
+        String_View result = {
             .size = s.size,
             .data = (const char *) memory.unwrap
         };
@@ -234,7 +234,7 @@ namespace aids
         return {.unwrap = result};
     }
 
-    String chop_by_delim(String *s, char delim)
+    String_View chop_by_delim(String_View *s, char delim)
     {
         if (s == nullptr || s->size == 0) {
             return {0};
@@ -244,7 +244,7 @@ namespace aids
         while (i < s->size && s->data[i] != delim)
             ++i;
 
-        String result = {
+        String_View result = {
             .size = i,
             .data = s->data
         };
@@ -260,7 +260,7 @@ namespace aids
         return result;
     }
 
-    String trim_begin(String s)
+    String_View trim_begin(String_View s)
     {
         while (s.size > 0 && isspace(*s.data)) {
             s.size -= 1;
@@ -269,7 +269,7 @@ namespace aids
         return s;
     }
 
-    String trim_end(String s)
+    String_View trim_end(String_View s)
     {
         while (s.size > 0 && isspace(*(s.data + s.size - 1))) {
             s.size -= 1;
@@ -277,12 +277,12 @@ namespace aids
         return s;
     }
 
-    String trim(String s)
+    String_View trim(String_View s)
     {
         return trim_begin(trim_end(s));
     }
 
-    String take(String s, size_t n)
+    String_View take(String_View s, size_t n)
     {
         return {
             .size = min(n, s.size),
@@ -290,7 +290,7 @@ namespace aids
         };
     }
 
-    String drop(String s, size_t n)
+    String_View drop(String_View s, size_t n)
     {
         if (n > s.size) return { .size = 0 };
 
@@ -304,7 +304,7 @@ namespace aids
     // PRINT
     ////////////////////////////////////////////////////////////
 
-    void print1(FILE *stream, String s)
+    void print1(FILE *stream, String_View s)
     {
         std::fwrite(s.data, 1, s.size, stream);
     }
@@ -375,28 +375,28 @@ namespace aids
     ////////////////////////////////////////////////////////////
 
     template <typename Ator = Mator>
-    Result<String, Errno> read_whole_file(const char *filename,
-                                          Ator *ator = &mator)
+    Result<String_View, Errno> read_whole_file(const char *filename,
+                                               Ator *ator = &mator)
     {
         FILE *f = fopen(filename, "rb");
-        if (!f) return result_errno<String>();
+        if (!f) return result_errno<String_View>();
         defer(fclose(f));
 
         int err = fseek(f, 0, SEEK_END);
-        if (err < 0) return result_errno<String>();
+        if (err < 0) return result_errno<String_View>();
 
         long size = ftell(f);
-        if (size < 0) return result_errno<String>();
+        if (size < 0) return result_errno<String_View>();
 
         err = fseek(f, 0, SEEK_SET);
-        if (err < 0) return result_errno<String>();
+        if (err < 0) return result_errno<String_View>();
 
         auto data = alloc<char*>(ator, size);
-        if (data.is_error) return refail<String>(data);
+        if (data.is_error) return refail<String_View>(data);
 
         size_t read_size = fread(data.unwrap, 1, size, f);
         if (read_size < size && ferror(f)) {
-            return result_errno<String>();
+            return result_errno<String_View>();
         }
 
         return {

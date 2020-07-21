@@ -21,13 +21,14 @@
 //
 // ============================================================
 //
-// aids — 0.0.2 — std replacement for C++. Designed to aid developers
+// aids — 0.0.3 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // ============================================================
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.0.3  bugfix for print1 of Maybe<T>
 //   0.0.2  fix sign-unsigned integer comparison in aids::read_file_as_string_view
 //   0.0.1  min, max, clamp,
 //          defer,
@@ -358,7 +359,7 @@ namespace aids
     template <typename T>
     void print1(FILE *stream, Maybe<T> maybe)
     {
-        if (maybe.has_value) {
+        if (!maybe.has_value) {
             print(stream, "None");
         } else {
             print(stream, "Some(", maybe.unwrap, ")");

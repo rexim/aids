@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.0.3 — std replacement for C++. Designed to aid developers
+// aids — 0.1.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // ============================================================

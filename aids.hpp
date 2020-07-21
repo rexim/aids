@@ -27,324 +27,10 @@ namespace aids
         return a > b ? a : b;
     }
 
-    ////////////////////////////////////////////////////////////
-    // RESULT
-    ////////////////////////////////////////////////////////////
-
-    template <typename T, typename Error>
-    struct Result
-    {
-        T unwrap;
-        bool is_error;
-        Error error;
-    };
-
-    template <typename Error>
-    struct Result<void, Error>
-    {
-        bool is_error;
-        Error error;
-    };
-
-    struct Errno
-    {
-        int unwrap;
-    };
-
-    void print1(FILE *stream, Errno e)
-    {
-        fprintf(stream, "%s", std::strerror(e.unwrap));
-    }
-
     template <typename T>
-    Result<T, Errno> result_errno(void)
+    T clamp(T x, T low, T high)
     {
-        return {
-            .is_error = true,
-            .error = { errno }
-        };
-    }
-
-    template <typename T, typename Error, typename... Message>
-    T unwrap_or_panic(Result<T, Error> result, Message... message)
-    {
-        if (result.is_error) {
-            println(stdout, "[PANIC] ", message..., ": ", result.error);
-            abort();
-        }
-
-        return result.unwrap;
-    }
-
-    template <typename Error, typename... Message>
-    void unwrap_or_panic(Result<void, Error> result, Message... message)
-    {
-        if (result.is_error) {
-            println(stdout, "[PANIC] ", message..., ": ", result.error);
-            abort();
-        }
-    }
-
-    template <typename U, typename T, typename Error>
-    Result<U, Error> refail(Result<T, Error> result)
-    {
-        return {
-            .is_error = result.is_error,
-            .error = result.error
-        };
-    }
-
-    template <typename T, typename Error>
-    Result<T, Error> fail(Error error)
-    {
-        return {
-            .is_error = true,
-            .error = error
-        };
-    }
-
-    ////////////////////////////////////////////////////////////
-    // ALLOCATOR
-    ////////////////////////////////////////////////////////////
-    // Ator  = Allocator (like Ctor or Dtor)
-    // Mator = Malloc Ator
-    ////////////////////////////////////////////////////////////
-
-    constexpr unsigned long long operator ""_KiB (unsigned long long s)
-    {
-        return s * 1024;
-    }
-
-    constexpr unsigned long long operator ""_MiB (unsigned long long s)
-    {
-        return s * 1024_KiB;
-    }
-
-    constexpr unsigned long long operator ""_GiB (unsigned long long s)
-    {
-        return s * 1024_MiB;
-    }
-
-    struct Mator {};
-
-    template <typename T>
-    Result<T, Errno> alloc(Mator *, size_t size)
-    {
-        T result = (T) malloc(size);
-        if (result == nullptr) return result_errno<T>();
-        return { .unwrap = result };
-    }
-
-    void free(Mator *, void *data, size_t)
-    {
-        std::free(data);
-    }
-
-    Mator mator;
-
-    template <size_t Capacity = 640_KiB>
-    struct Region
-    {
-        size_t size = 0;
-        uint8_t data[Capacity];
-    };
-
-    template <typename T, size_t Capacity>
-    Result<T, Errno> alloc(Region<Capacity> *region, size_t size)
-    {
-        if (size + region->size > Capacity) {
-            return fail<T, Errno>({ ENOMEM });
-        }
-
-        T result = (T) (region->data + region->size);
-        region->size += size;
-
-        return { .unwrap = result };
-    }
-
-    ////////////////////////////////////////////////////////////
-    // STRING
-    ////////////////////////////////////////////////////////////
-
-    struct String_View
-    {
-        size_t size;
-        const char *data;
-    };
-
-    String_View string_of_cstr(const char *data)
-    {
-        String_View result = {
-            .size = strlen(data),
-            .data = data
-        };
-        return result;
-    }
-
-    template <typename Ator = Mator>
-    Result<const char *, Errno> cstr_of_string(String_View s, Ator *ator = &mator)
-    {
-        auto result = alloc<const char *>(ator, s.size + 1);
-        if (result.is_error) return result;
-
-        char* cstr = (char*)result.unwrap;
-
-        memcpy((void *)cstr, s.data, s.size);
-        cstr[s.size] = '\0';
-        return { .unwrap = cstr };
-    }
-
-    template <typename Ator = Mator>
-    void free(String_View s, Ator *ator = &mator)
-    {
-        free(ator, (void*) s.data, s.size);
-    }
-
-    bool operator==(String_View a, String_View b)
-    {
-        if (a.size != b.size) return false;
-        return memcmp(a.data, b.data, a.size) == 0;
-    }
-
-    bool operator!=(String_View a, String_View b)
-    {
-        return !(a == b);
-    }
-
-    String_View operator "" _s(const char *data, size_t size)
-    {
-        return { size, data };
-    }
-
-    template <typename Ator = Mator>
-    Result<String_View, Errno> copy(String_View s, Ator *ator = &mator)
-    {
-        auto memory = alloc(ator, s.size);
-        if (memory.is_error) {
-            return refail<String_View>(memory);
-        }
-
-        String_View result = {
-            .size = s.size,
-            .data = (const char *) memory.unwrap
-        };
-
-        memcpy((void*) result.data, s.data, result.size);
-
-        return {.unwrap = result};
-    }
-
-    String_View chop_by_delim(String_View *s, char delim)
-    {
-        if (s == nullptr || s->size == 0) {
-            return {0};
-        }
-
-        size_t i = 0;
-        while (i < s->size && s->data[i] != delim)
-            ++i;
-
-        String_View result = {
-            .size = i,
-            .data = s->data
-        };
-
-        if (i == s->size) {
-            s->data += s->size;
-            s->size = 0;
-        } else {
-            s->data += i + 1;
-            s->size -= i + 1;
-        }
-
-        return result;
-    }
-
-    String_View trim_begin(String_View s)
-    {
-        while (s.size > 0 && isspace(*s.data)) {
-            s.size -= 1;
-            s.data += 1;
-        }
-        return s;
-    }
-
-    String_View trim_end(String_View s)
-    {
-        while (s.size > 0 && isspace(*(s.data + s.size - 1))) {
-            s.size -= 1;
-        }
-        return s;
-    }
-
-    String_View trim(String_View s)
-    {
-        return trim_begin(trim_end(s));
-    }
-
-    String_View take(String_View s, size_t n)
-    {
-        return {
-            .size = min(n, s.size),
-            .data = s.data
-        };
-    }
-
-    String_View drop(String_View s, size_t n)
-    {
-        if (n > s.size) return { .size = 0 };
-
-        return {
-            .size = s.size - n,
-            .data = s.data + n
-        };
-    }
-
-    ////////////////////////////////////////////////////////////
-    // PRINT
-    ////////////////////////////////////////////////////////////
-
-    void print1(FILE *stream, String_View s)
-    {
-        std::fwrite(s.data, 1, s.size, stream);
-    }
-
-    void print1(FILE *stream, const char *s)
-    {
-        std::fwrite(s, 1, std::strlen(s), stream);
-    }
-
-    void print1(FILE *stream, char *s)
-    {
-        std::fwrite(s, 1, std::strlen(s), stream);
-    }
-
-    void print1(FILE *stream, char c)
-    {
-        std::fputc(c, stream);
-    }
-
-    void print1(FILE *stream, float f)
-    {
-        std::fprintf(stream, "%f", f);
-    }
-
-    void print1(FILE *stream, unsigned long long x)
-    {
-        std::fprintf(stream, "%lld", x);
-    }
-
-    template <typename ... Types>
-    void print(FILE *stream, Types... args)
-    {
-        (print1(stream, args), ...);
-    }
-
-    template <typename ... Types>
-    void println(FILE *stream, Types... args)
-    {
-        (print1(stream, args), ...);
-        print1(stream, '\n');
+        return min(max(low, x), high);
     }
 
     ////////////////////////////////////////////////////////////
@@ -368,97 +54,285 @@ namespace aids
 #define DEFER_1(x, y) x##y
 #define DEFER_2(x, y) DEFER_1(x, y)
 #define DEFER_3(x)    DEFER_2(x, __COUNTER__)
-#define defer(code)   auto DEFER_3(_defer_) = aids::defer_func([&](){code;})
+#define defer(code)   auto DEFER_3(_defer_) = ::aids::defer_func([&](){code;})
 
     ////////////////////////////////////////////////////////////
-    // FILE
+    // Maybe
     ////////////////////////////////////////////////////////////
 
-    template <typename Ator = Mator>
-    Result<String_View, Errno> read_whole_file(const char *filename,
-                                               Ator *ator = &mator)
+    template <typename T>
+    struct Maybe
+    {
+        bool has_value;
+        T unwrap;
+    };
+
+    ////////////////////////////////////////////////////////////
+    // STRING_VIEW
+    ////////////////////////////////////////////////////////////
+
+    struct String_View
+    {
+        size_t count;
+        const char *data;
+
+        [[nodiscard]]
+        String_View trim_begin(void) const
+        {
+            String_View view = *this;
+
+            while (view.count != 0 && isspace(*view.data)) {
+                view.data  += 1;
+                view.count -= 1;
+            }
+            return view;
+        }
+
+        [[nodiscard]]
+        String_View trim_end(void) const
+        {
+            String_View view = *this;
+
+            while (view.count != 0 && isspace(*(view.data + view.count - 1))) {
+                view.count -= 1;
+            }
+            return view;
+        }
+
+        [[nodiscard]]
+        String_View trim(void) const
+        {
+            return trim_begin().trim_end();
+        }
+
+        void chop_back(size_t n)
+        {
+            count -= n < count ? n : count;
+        }
+
+        void chop(size_t n)
+        {
+            if (n > count) {
+                data += count;
+                count = 0;
+            } else {
+                data  += n;
+                count -= n;
+            }
+        }
+
+        void grow(size_t n)
+        {
+            count += n;
+        }
+
+        String_View chop_by_delim(char delim)
+        {
+            assert(data);
+
+            size_t i = 0;
+            while (i < count && data[i] != delim) i++;
+            String_View result = {i, data};
+            chop(i + 1);
+
+            return result;
+        }
+
+        String_View chop_word(void)
+        {
+            *this = trim_begin();
+
+            size_t i = 0;
+            while (i < count && !isspace(data[i])) i++;
+
+            String_View result = { i, data };
+
+            count -= i;
+            data  += i;
+
+            return result;
+        }
+
+        template <typename Integer>
+        Maybe<Integer> from_hex() const
+        {
+            Integer result = {};
+
+            for (size_t i = 0; i < count; ++i) {
+                Integer x = data[i];
+                if ('0' <= x && x <= '9') {
+                    x = (Integer) (x - '0');
+                } else if ('a' <= x && x <= 'f') {
+                    x = (Integer) (x - 'a' + 10);
+                } else if ('A' <= x && x <= 'F') {
+                    x = (Integer) (x - 'A' + 10);
+                } else {
+                    return {};
+                }
+                result = result * (Integer) 0x10 + x;
+            }
+
+            return {true, result};
+        }
+
+        template <typename Integer>
+        Maybe<Integer> as_integer() const
+        {
+            Integer sign = 1;
+            Integer number = {};
+            String_View view = *this;
+
+            if (view.count == 0) {
+                return {};
+            }
+
+            if (*view.data == '-') {
+                sign = -1;
+                view.chop(1);
+            }
+
+            while (view.count) {
+                if (!isdigit(*view.data)) {
+                    return {};
+                }
+                number = number * 10 + (*view.data - '0');
+                view.chop(1);
+            }
+
+            return { true, number * sign };
+        }
+
+        Maybe<float> as_float() const
+        {
+            char buffer[300] = {};
+            memcpy(buffer, data, min(sizeof(buffer) - 1, count));
+            char *endptr = NULL;
+            float result = strtof(buffer, &endptr);
+
+            if (buffer > endptr || (size_t) (endptr - buffer) != count) {
+                return {};
+            }
+
+            return {true, result};
+        }
+
+
+        String_View subview(size_t start, size_t count) const
+        {
+            if (start + count <= this->count) {
+                return {count, data + start};
+            }
+
+            return {};
+        }
+
+        bool operator==(String_View view) const
+        {
+            if (this->count != view.count) return false;
+            return memcmp(this->data, view.data, this->count) == 0;
+        }
+
+        bool operator!=(String_View view) const
+        {
+            return !(*this == view);
+        }
+
+        bool has_prefix(String_View prefix) const
+        {
+            return prefix.count <= this->count
+                && this->subview(0, prefix.count) == prefix;
+        }
+    };
+
+    String_View operator ""_sv(const char *data, size_t count)
+    {
+        return {count, data};
+    }
+
+    String_View cstr_as_string_view(const char *cstr)
+    {
+        return {strlen(cstr), cstr};
+    }
+
+    void print1(FILE *stream, String_View view)
+    {
+        fwrite(view.data, 1, view.count, stream);
+    }
+
+    Maybe<String_View> read_file_as_string_view(const char *filename)
     {
         FILE *f = fopen(filename, "rb");
-        if (!f) return result_errno<String_View>();
+        if (!f) return {};
         defer(fclose(f));
 
         int err = fseek(f, 0, SEEK_END);
-        if (err < 0) return result_errno<String_View>();
+        if (err < 0) return {};
 
         long size = ftell(f);
-        if (size < 0) return result_errno<String_View>();
+        if (size < 0) return {};
 
         err = fseek(f, 0, SEEK_SET);
-        if (err < 0) return result_errno<String_View>();
+        if (err < 0) return {};
 
-        auto data = alloc<char*>(ator, size);
-        if (data.is_error) return refail<String_View>(data);
+        auto data = malloc(size);
+        if (!data) return {};
 
-        size_t read_size = fread(data.unwrap, 1, size, f);
-        if (read_size < size && ferror(f)) {
-            return result_errno<String_View>();
+        size_t read_size = fread(data, 1, size, f);
+        if (read_size < size && ferror(f)) return {};
+
+        return {true, {static_cast<size_t>(size), static_cast<const char*>(data)}};
+    }
+
+    ////////////////////////////////////////////////////////////
+    // PRINT
+    ////////////////////////////////////////////////////////////
+
+    void print1(FILE *stream, const char *s)
+    {
+        fwrite(s, 1, strlen(s), stream);
+    }
+
+    void print1(FILE *stream, char *s)
+    {
+        fwrite(s, 1, strlen(s), stream);
+    }
+
+    void print1(FILE *stream, char c)
+    {
+        fputc(c, stream);
+    }
+
+    void print1(FILE *stream, float f)
+    {
+        fprintf(stream, "%f", f);
+    }
+
+    void print1(FILE *stream, unsigned long long x)
+    {
+        fprintf(stream, "%lld", x);
+    }
+
+    template <typename ... Types>
+    void print(FILE *stream, Types... args)
+    {
+        (print1(stream, args), ...);
+    }
+
+    template <typename T>
+    void print1(FILE *stream, Maybe<T> maybe)
+    {
+        if (maybe.has_value) {
+            print(stream, "None");
+        } else {
+            print(stream, "Some(", maybe.unwrap, ")");
         }
-
-        return {
-            .is_error = false,
-            .unwrap = {
-                .size = read_size,
-                .data = (const char *)data.unwrap,
-            }
-        };
     }
 
-    ////////////////////////////////////////////////////////////
-    // QUEUE
-    ////////////////////////////////////////////////////////////
-
-    template <typename T, size_t Capacity>
-    struct Fixed_Queue
+    template <typename ... Types>
+    void println(FILE *stream, Types... args)
     {
-        size_t begin = 0;
-        size_t size = 0;
-        T elements[Capacity];
-    };
-
-    template <typename T, size_t Capacity>
-    void enqueue(Fixed_Queue<T, Capacity> *queue, T element)
-    {
-        assert(queue->size < Capacity);
-        queue->elements[(queue->begin + queue->size) % Capacity] = element;
-        queue->size++;
-    }
-
-    template <typename T, size_t Capacity>
-    T dequeue(Fixed_Queue<T, Capacity> *queue)
-    {
-        assert(queue->size > 0);
-        T result = queue->elements[queue->begin];
-        queue->begin = (queue->begin + 1) % Capacity;
-        queue->size--;
-        return result;
-    }
-
-    ////////////////////////////////////////////////////////////
-    // STACK
-    ////////////////////////////////////////////////////////////
-
-    template <typename T, size_t Capacity>
-    struct Fixed_Stack
-    {
-        size_t size = 0;
-        T elements[Capacity];
-    };
-
-    template <typename T, size_t Capacity>
-    Result<void, Errno> push(Fixed_Stack<T, Capacity> *stack, T element)
-    {
-        if (stack->size >= Capacity) {
-            return fail<void, Errno>({ ENOMEM });
-        }
-
-        stack->elements[stack->size++] = element;
-
-        return {};
+        (print1(stream, args), ...);
+        print1(stream, '\n');
     }
 }
 

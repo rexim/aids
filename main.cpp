@@ -9,13 +9,13 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    auto result = read_whole_file(argv[1]);
-    if (result.is_error) {
-        println(stderr, "Could not read file `", argv[1], "`: ", result.error);
+    auto result = read_file_as_string_view(argv[1]);
+    if (!result.has_value) {
+        println(stderr, "Could not read file `", argv[1], "`: ", strerror(errno));
         exit(1);
     }
     auto content = result.unwrap;
-    defer(free(content));
+    defer(free((void*) content.data));
 
     println(stdout, content);
 

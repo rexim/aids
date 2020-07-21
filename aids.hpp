@@ -28,6 +28,9 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.1.0  print1 for long unsigned int
+//          print1 for int
+//          Pad
 //   0.0.3  bugfix for print1 of Maybe<T>
 //   0.0.2  fix sign-unsigned integer comparison in aids::read_file_as_string_view
 //   0.0.1  min, max, clamp,
@@ -350,6 +353,16 @@ namespace aids
         fprintf(stream, "%lld", x);
     }
 
+    void print1(FILE *stream, long unsigned int x)
+    {
+        fprintf(stream, "%lu", x);
+    }
+
+    void print1(FILE *stream, int x)
+    {
+        fprintf(stream, "%d", x);
+    }
+
     template <typename ... Types>
     void print(FILE *stream, Types... args)
     {
@@ -371,6 +384,19 @@ namespace aids
     {
         (print1(stream, args), ...);
         print1(stream, '\n');
+    }
+
+    struct Pad
+    {
+        size_t n;
+        char c;
+    };
+
+    void print1(FILE *stream, Pad pad)
+    {
+        for (size_t i = 0; i < pad.n; ++i) {
+            fputc(pad.c, stream);
+        }
     }
 }
 

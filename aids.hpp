@@ -21,18 +21,19 @@
 //
 // ============================================================
 //
-// aids — 0.01 — std replacement for C++. Designed to aid developers
+// aids — 0.0.2 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // ============================================================
 //
-// ChangeLog
+// ChangeLog (https://semver.org/ is implied)
 //
-//   0.01  min, max, clamp,
-//         defer,
-//         Maybe<T>,
-//         String_View,
-//         print, println
+//   0.0.2  fix sign-unsigned integer comparison in aids::read_file_as_string_view
+//   0.0.1  min, max, clamp,
+//          defer,
+//          Maybe<T>,
+//          String_View,
+//          print, println
 
 #ifndef AIDS_HPP_
 #define AIDS_HPP_
@@ -314,7 +315,7 @@ namespace aids
         if (!data) return {};
 
         size_t read_size = fread(data, 1, size, f);
-        if (read_size < size && ferror(f)) return {};
+        if (read_size != (size_t) size && ferror(f)) return {};
 
         return {true, {static_cast<size_t>(size), static_cast<const char*>(data)}};
     }

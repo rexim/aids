@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.2.0 — std replacement for C++. Designed to aid developers
+// aids — 0.3.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.3.0  Stretchy_Buffer
 //   0.2.0  unwrap_into
 //          print1 for long int
 //   0.1.0  print1 for long unsigned int
@@ -333,6 +334,39 @@ namespace aids
         if (read_size != (size_t) size && ferror(f)) return {};
 
         return {true, {static_cast<size_t>(size), static_cast<const char*>(data)}};
+    }
+
+    ////////////////////////////////////////////////////////////
+    // STRETCHY BUFFER
+    ////////////////////////////////////////////////////////////
+
+    struct Stretchy_Buffer
+    {
+        size_t capacity;
+        size_t size;
+        char *data;
+
+        void push(const char *that_data, size_t that_size)
+        {
+            if (size + that_size > capacity) {
+                capacity = 2 * capacity + that_size;
+                data = (char*)realloc((void*)data, capacity);
+            }
+
+            memcpy(data + size, that_data, that_size);
+            size += that_size;
+        }
+
+        template <typename T>
+        void push(T x)
+        {
+            push((char*) &x, sizeof(x));
+        }
+    };
+
+    void print1(FILE *stream, Stretchy_Buffer buffer)
+    {
+        fwrite(buffer.data, 1, buffer.size, stream);
     }
 
     ////////////////////////////////////////////////////////////

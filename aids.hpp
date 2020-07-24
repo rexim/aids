@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.3.1  mod
 //   0.3.0  Stretchy_Buffer
 //   0.2.0  unwrap_into
 //          print1 for long int
@@ -77,6 +78,12 @@ namespace aids
     T clamp(T x, T low, T high)
     {
         return min(max(low, x), high);
+    }
+
+    template <typename T>
+    T mod(T a, T b)
+    {
+        return (a % b + b) % b;
     }
 
     ////////////////////////////////////////////////////////////

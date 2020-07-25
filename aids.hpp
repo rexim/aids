@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.4.0  mod
 //   0.3.0  Stretchy_Buffer
 //   0.2.0  unwrap_into
 //          print1 for long int
@@ -43,6 +44,12 @@
 //          Maybe<T>,
 //          String_View,
 //          print, println
+//
+// ============================================================
+//
+// Contributors:
+//   Alexey Kutepov (github:rexim)
+//   Aodhnait Étaín (github:aodhneine)
 
 #ifndef AIDS_HPP_
 #define AIDS_HPP_
@@ -77,6 +84,12 @@ namespace aids
     T clamp(T x, T low, T high)
     {
         return min(max(low, x), high);
+    }
+
+    template <typename T>
+    T mod(T a, T b)
+    {
+        return (a % b + b) % b;
     }
 
     ////////////////////////////////////////////////////////////

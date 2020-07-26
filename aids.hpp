@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.4.0 — std replacement for C++. Designed to aid developers
+// aids — 0.5.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.5.0  Equality operations for Maybe<T>
 //   0.4.0  mod
 //   0.3.0  Stretchy_Buffer
 //   0.2.0  unwrap_into
@@ -124,6 +125,20 @@ namespace aids
     {
         bool has_value;
         T unwrap;
+
+        bool operator!=(const Maybe<T> &that) const
+        {
+            return !(*this == that);
+        }
+
+        bool operator==(const Maybe<T> &that) const
+        {
+            if (this->has_value && that.has_value) {
+                return this->unwrap == that.unwrap;
+            }
+
+            return !this->has_value && !that.has_value;
+        }
     };
 
 #define unwrap_into(lvalue, maybe)              \

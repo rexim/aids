@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.5.0 — std replacement for C++. Designed to aid developers
+// aids — 0.6.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.6.0  swap
 //   0.5.0  Equality operations for Maybe<T>
 //   0.4.0  mod
 //   0.3.0  Stretchy_Buffer
@@ -91,6 +92,14 @@ namespace aids
     T mod(T a, T b)
     {
         return (a % b + b) % b;
+    }
+
+    template <typename T>
+    void swap(T *a, T *b)
+    {
+        T t = *a;
+        *a = *b;
+        *b = t;
     }
 
     ////////////////////////////////////////////////////////////

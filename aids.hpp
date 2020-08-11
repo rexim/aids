@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.6.0 — std replacement for C++. Designed to aid developers
+// aids — 0.7.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids

@@ -30,6 +30,8 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.7.0  String_View::operator<()
+//          print1(FILE*, bool)
 //   0.6.0  swap
 //   0.5.0  Equality operations for Maybe<T>
 //   0.4.0  mod
@@ -316,6 +318,20 @@ namespace aids
             return {};
         }
 
+        bool operator<(String_View b) const
+        {
+            auto a = *this;
+            while (a.count > 0 && b.count > 0) {
+                if (*a.data != *b.data) {
+                    return *a.data < *b.data;
+                }
+                a.chop(1);
+                b.chop(1);
+            }
+
+            return a.count < b.count;
+        }
+
         bool operator==(String_View view) const
         {
             if (this->count != view.count) return false;
@@ -454,6 +470,11 @@ namespace aids
     void print(FILE *stream, Types... args)
     {
         (print1(stream, args), ...);
+    }
+
+    void print1(FILE *stream, bool b)
+    {
+        print1(stream, b ? "true" : "false");
     }
 
     template <typename T>

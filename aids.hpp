@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.7.0 — std replacement for C++. Designed to aid developers
+// aids — 0.8.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.8.0  Args
 //   0.7.0  String_View::operator<()
 //          print1(FILE*, bool)
 //   0.6.0  swap
@@ -421,6 +422,29 @@ namespace aids
     {
         fwrite(buffer.data, 1, buffer.size, stream);
     }
+
+    ////////////////////////////////////////////////////////////
+    // ARGS
+    ////////////////////////////////////////////////////////////
+
+    struct Args
+    {
+        int argc;
+        char **argv;
+
+        char *pop()
+        {
+            char *result = *argv;
+            argv += 1;
+            argc -= 1;
+            return result;
+        }
+
+        bool empty()
+        {
+            return argc == 0;
+        }
+    };
 
     ////////////////////////////////////////////////////////////
     // PRINT

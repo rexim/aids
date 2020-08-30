@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.9.0 — std replacement for C++. Designed to aid developers
+// aids — 0.10.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.10.0 sprint1(String_Buffer *buffer, String_View view)
 //   0.9.0  String_Buffer
 //          sprintln
 //   0.8.0  Args
@@ -459,14 +460,21 @@ namespace aids
         size_t size;
     };
 
-    // buffer = [a] [b] [c] [0]
-    // snprintf(buffer, 4, "abcd") == 3
     void sprint1(String_Buffer *buffer, const char *cstr)
     {
         int n = snprintf(
             buffer->data + buffer->size,
             buffer->capacity - buffer->size,
             "%s", cstr);
+        buffer->size = min(buffer->size + n, buffer->capacity - 1);
+    }
+
+    void sprint1(String_Buffer *buffer, String_View view)
+    {
+        int n = snprintf(
+            buffer->data + buffer->size,
+            buffer->capacity - buffer->size,
+            "%.*s", (int) view.count, view.data);
         buffer->size = min(buffer->size + n, buffer->capacity - 1);
     }
 

@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.8.0 — std replacement for C++. Designed to aid developers
+// aids — 0.9.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,8 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.9.0  String_Buffer
+//          sprintln
 //   0.8.0  Args
 //   0.7.0  String_View::operator<()
 //          print1(FILE*, bool)
@@ -447,6 +449,123 @@ namespace aids
     };
 
     ////////////////////////////////////////////////////////////
+    // SPRINT
+    ////////////////////////////////////////////////////////////
+
+    struct String_Buffer
+    {
+        size_t capacity;
+        char *data;
+        size_t size;
+    };
+
+    // buffer = [a] [b] [c] [0]
+    // snprintf(buffer, 4, "abcd") == 3
+    void sprint1(String_Buffer *buffer, const char *cstr)
+    {
+        int n = snprintf(
+            buffer->data + buffer->size,
+            buffer->capacity - buffer->size,
+            "%s", cstr);
+        buffer->size = min(buffer->size + n, buffer->capacity - 1);
+    }
+
+    void sprint1(String_Buffer *buffer, char c)
+    {
+        int n = snprintf(
+            buffer->data + buffer->size,
+            buffer->capacity - buffer->size,
+            "%c", c);
+        buffer->size = min(buffer->size + n, buffer->capacity - 1);
+    }
+
+    void sprint1(String_Buffer *buffer, float f)
+    {
+        int n = snprintf(
+            buffer->data + buffer->size,
+            buffer->capacity - buffer->size,
+            "%f", f);
+        buffer->size = min(buffer->size + n, buffer->capacity - 1);
+    }
+
+    void sprint1(String_Buffer *buffer, unsigned long long x)
+    {
+        int n = snprintf(
+            buffer->data + buffer->size,
+            buffer->capacity - buffer->size,
+            "%lld", x);
+        buffer->size = min(buffer->size + n, buffer->capacity - 1);
+    }
+
+    void sprint1(String_Buffer *buffer, long unsigned int x)
+    {
+        int n = snprintf(
+            buffer->data + buffer->size,
+            buffer->capacity - buffer->size,
+            "%lu", x);
+        buffer->size = min(buffer->size + n, buffer->capacity - 1);
+    }
+
+    void sprint1(String_Buffer *buffer, int x)
+    {
+        int n = snprintf(
+            buffer->data + buffer->size,
+            buffer->capacity - buffer->size,
+            "%d", x);
+        buffer->size = min(buffer->size + n, buffer->capacity - 1);
+    }
+
+    void sprint1(String_Buffer *buffer, long int x)
+    {
+        int n = snprintf(
+            buffer->data + buffer->size,
+            buffer->capacity - buffer->size,
+            "%ld", x);
+        buffer->size = min(buffer->size + n, buffer->capacity - 1);
+    }
+
+    void sprint1(String_Buffer *buffer, bool b)
+    {
+        sprint1(buffer, b ? "true" : "false");
+    }
+
+    template <typename ... Types>
+    void sprint(String_Buffer *buffer, Types... args)
+    {
+        (sprint1(buffer, args), ...);
+    }
+
+    template <typename T>
+    void sprint1(String_Buffer *buffer, Maybe<T> maybe)
+    {
+        if (!maybe.has_value) {
+            sprint(buffer, "None");
+        } else {
+            sprint(buffer, "Some(", maybe.unwrap, ")");
+        }
+    }
+
+    template <typename ... Types>
+    void sprintln(String_Buffer *buffer, Types... args)
+    {
+        (sprint1(buffer, args), ...);
+        sprint1(buffer, '\n');
+    }
+
+    struct Pad
+    {
+        size_t n;
+        char c;
+    };
+
+    void sprint1(String_Buffer *buffer, Pad pad)
+    {
+        for (size_t i = 0; i < pad.n; ++i) {
+            sprint1(buffer, pad.c);
+        }
+    }
+
+    ////////////////////////////////////////////////////////////
     // PRINT
     ////////////////////////////////////////////////////////////
 
@@ -517,12 +636,6 @@ namespace aids
         (print1(stream, args), ...);
         print1(stream, '\n');
     }
-
-    struct Pad
-    {
-        size_t n;
-        char c;
-    };
 
     void print1(FILE *stream, Pad pad)
     {

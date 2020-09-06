@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.10.0 — std replacement for C++. Designed to aid developers
+// aids — 0.11.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.11.0 Caps
 //   0.10.0 sprint1(String_Buffer *buffer, String_View view)
 //   0.9.0  String_Buffer
 //          sprintln
@@ -573,6 +574,18 @@ namespace aids
         }
     }
 
+    struct Caps
+    {
+        String_View unwrap;
+    };
+
+    void sprint1(String_Buffer *buffer, Caps caps)
+    {
+        for (size_t i = 0; i < caps.unwrap.count; ++i) {
+            sprint1(buffer, (char) toupper(caps.unwrap.data[i]));
+        }
+    }
+
     ////////////////////////////////////////////////////////////
     // PRINT
     ////////////////////////////////////////////////////////////
@@ -649,6 +662,13 @@ namespace aids
     {
         for (size_t i = 0; i < pad.n; ++i) {
             fputc(pad.c, stream);
+        }
+    }
+
+    void print1(FILE *stream, Caps caps)
+    {
+        for (size_t i = 0; i < caps.unwrap.count; ++i) {
+            print1(stream, (char) toupper(caps.unwrap.data[i]));
         }
     }
 }

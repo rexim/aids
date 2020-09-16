@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.12.0 — std replacement for C++. Designed to aid developers
+// aids — 0.12.1 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.12.1 Fix print1 and sprint1 bug for unsigned long long
 //   0.12.0 void print1(FILE *stream, String_Buffer buffer)
 //          void sprint1(String_Buffer *buffer, String_Buffer another_buffer)
 //          String_View String_Buffer::view() const
@@ -510,7 +511,7 @@ namespace aids
         int n = snprintf(
             buffer->data + buffer->size,
             buffer->capacity - buffer->size,
-            "%lld", x);
+            "%llu", x);
         buffer->size = min(buffer->size + n, buffer->capacity - 1);
     }
 
@@ -625,7 +626,7 @@ namespace aids
 
     void print1(FILE *stream, unsigned long long x)
     {
-        fprintf(stream, "%lld", x);
+        fprintf(stream, "%llu", x);
     }
 
     void print1(FILE *stream, long unsigned int x)

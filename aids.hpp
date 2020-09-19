@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.12.1 — std replacement for C++. Designed to aid developers
+// aids — 0.13.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,8 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.13.0 void print1(FILE *stream, unsigned int x)
+//          Maybe<uint32_t> utf8_get_code(String_View view, size_t *size)
 //   0.12.1 Fix print1 and sprint1 bug for unsigned long long
 //   0.12.0 void print1(FILE *stream, String_Buffer buffer)
 //          void sprint1(String_Buffer *buffer, String_Buffer another_buffer)
@@ -634,6 +636,11 @@ namespace aids
         fprintf(stream, "%lu", x);
     }
 
+    void print1(FILE *stream, unsigned int x)
+    {
+        fprintf(stream, "%u", x);
+    }
+
     void print1(FILE *stream, int x)
     {
         fprintf(stream, "%d", x);
@@ -689,6 +696,67 @@ namespace aids
     void print1(FILE *stream, String_Buffer buffer)
     {
         print1(stream, buffer.view());
+    }
+
+    ////////////////////////////////////////////////////////////
+    // UTF-8
+    ////////////////////////////////////////////////////////////
+
+    Maybe<uint32_t> utf8_get_code(String_View view, size_t *size)
+    {
+#define UTF8_1BYTE_MASK (1 << 7)
+#define UTF8_2BYTES_MASK (1 << 5)
+#define UTF8_3BYTES_MASK (1 << 4)
+#define UTF8_4BYTES_MASK (1 << 3)
+#define UTF8_EXTRA_BYTE_MASK (1 << 6)
+            if (view.count >= 1 &&
+                (*view.data & UTF8_1BYTE_MASK) == 0)
+            {
+                *size = 1;
+                return {true, static_cast<uint32_t>(*view.data)};
+            }
+            if (view.count >= 2 &&
+                (view.data[0] & UTF8_2BYTES_MASK) == 0 &&
+                (view.data[1] & UTF8_EXTRA_BYTE_MASK) == 0)
+            {
+                *size = 2;
+                const auto byte1 = static_cast<uint32_t>((view.data[0] & (UTF8_2BYTES_MASK - 1)) << 6);
+                const auto byte2 = static_cast<uint32_t>(view.data[1] & (UTF8_EXTRA_BYTE_MASK - 1));
+                return {true, byte1 | byte2};
+            }
+            if (view.count >= 3 &&
+                (view.data[0] & UTF8_3BYTES_MASK) == 0 &&
+                (view.data[1] & UTF8_EXTRA_BYTE_MASK) == 0 &&
+                (view.data[2] & UTF8_EXTRA_BYTE_MASK) == 0)
+            {
+                *size = 3;
+                const auto byte1 = static_cast<uint32_t>((view.data[0] & (UTF8_3BYTES_MASK - 1)) << (6 * 2));
+                const auto byte2 = static_cast<uint32_t>((view.data[1] & (UTF8_EXTRA_BYTE_MASK - 1)) << 6);
+                const auto byte3 = static_cast<uint32_t>(view.data[2] & (UTF8_EXTRA_BYTE_MASK - 1));
+                return {true, byte1 | byte2 | byte3};
+            }
+            if (view.count >= 4 &&
+                (view.data[0] & UTF8_4BYTES_MASK) == 0 &&
+                (view.data[1] & UTF8_EXTRA_BYTE_MASK) == 0 &&
+                (view.data[2] & UTF8_EXTRA_BYTE_MASK) == 0 &&
+                (view.data[3] & UTF8_EXTRA_BYTE_MASK) == 0)
+            {
+                *size = 4;
+                const auto byte1 = static_cast<uint32_t>((view.data[0] & (UTF8_3BYTES_MASK - 1)) << (6 * 3));
+                const auto byte2 = static_cast<uint32_t>((view.data[1] & (UTF8_EXTRA_BYTE_MASK - 1)) << (6 * 2));
+                const auto byte3 = static_cast<uint32_t>((view.data[2] & (UTF8_EXTRA_BYTE_MASK - 1)) << 6);
+                const auto byte4 = static_cast<uint32_t>(view.data[3] & (UTF8_EXTRA_BYTE_MASK - 1));
+                return {true, byte1 | byte2 | byte3 | byte4};
+            }
+            else
+            {
+                return {};
+            }
+#undef UTF8_1BYTE_MASK
+#undef UTF8_2BYTES_MASK
+#undef UTF8_3BYTES_MASK
+#undef UTF8_4BYTES_MASK
+#undef UTF8_EXTRA_BYTE_MASK
     }
 }
 

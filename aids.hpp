@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.13.0 — std replacement for C++. Designed to aid developers
+// aids — 0.13.2 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.13.2 Fix magic constant types in utf8_get_code
 //   0.13.1 Remove macros from utf8_get_code implementation
 //   0.13.0 void print1(FILE *stream, unsigned int x)
 //          Maybe<uint32_t> utf8_get_code(String_View view, size_t *size)
@@ -705,11 +706,11 @@ namespace aids
 
     Maybe<uint32_t> utf8_get_code(String_View view, size_t *size)
     {
-        const uint32_t UTF8_1BYTE_MASK = 1 << 7;
-        const uint32_t UTF8_2BYTES_MASK = 1 << 5;
-        const uint32_t UTF8_3BYTES_MASK = 1 << 4;
-        const uint32_t UTF8_4BYTES_MASK = 1 << 3;
-        const uint32_t UTF8_EXTRA_BYTE_MASK = 1 << 6;
+        const uint8_t UTF8_1BYTE_MASK = 1 << 7;
+        const uint8_t UTF8_2BYTES_MASK = 1 << 5;
+        const uint8_t UTF8_3BYTES_MASK = 1 << 4;
+        const uint8_t UTF8_4BYTES_MASK = 1 << 3;
+        const uint8_t UTF8_EXTRA_BYTE_MASK = 1 << 6;
 
         if (view.count >= 1 &&
             (*view.data & UTF8_1BYTE_MASK) == 0)

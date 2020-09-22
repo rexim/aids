@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.13.3 — std replacement for C++. Designed to aid developers
+// aids — 0.14.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.14.0 size_t String_View::count_chars(char x) const
 //   0.13.3 Fix control flow in utf8_get_code
 //   0.13.2 Fix magic constant types in utf8_get_code
 //   0.13.1 Remove macros from utf8_get_code implementation
@@ -361,6 +362,17 @@ namespace aids
         {
             return prefix.count <= this->count
                 && this->subview(0, prefix.count) == prefix;
+        }
+
+        size_t count_chars(char x) const
+        {
+            size_t result = 0;
+            for (size_t i = 0; i < count; ++i) {
+                if (data[i] == x) {
+                    result += 1;
+                }
+            }
+            return result;
         }
     };
 

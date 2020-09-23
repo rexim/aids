@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.14.0 — std replacement for C++. Designed to aid developers
+// aids — 0.15.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.15.0 Make min() and max() variadic
 //   0.14.0 size_t String_View::count_chars(char x) const
 //   0.13.3 Fix control flow in utf8_get_code
 //   0.13.2 Fix magic constant types in utf8_get_code
@@ -88,15 +89,29 @@ namespace aids
     ////////////////////////////////////////////////////////////
 
     template <typename T>
-    T min(T a, T b)
+    T min(T x)
     {
-        return a < b ? a : b;
+        return x;
+    }
+
+    template <typename T, typename... Rest>
+    T min(T x, Rest... rest)
+    {
+        auto y = min(rest...);
+        return x < y ? x : y;
     }
 
     template <typename T>
-    T max(T a, T b)
+    T max(T x)
     {
-        return a > b ? a : b;
+        return x;
+    }
+
+    template <typename T, typename... Rest>
+    T max(T x, Rest... rest)
+    {
+        auto y = max(rest...);
+        return x < y ? y : x;
     }
 
     template <typename T>

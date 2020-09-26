@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.15.0 — std replacement for C++. Designed to aid developers
+// aids — 0.16.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,8 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.16.0 Dynamic_Array
+//          deprecate Stretchy_Buffer
 //   0.15.0 Make min() and max() variadic
 //   0.14.0 size_t String_View::count_chars(char x) const
 //   0.13.3 Fix control flow in utf8_get_code
@@ -431,34 +433,73 @@ namespace aids
     }
 
     ////////////////////////////////////////////////////////////
-    // STRETCHY BUFFER
+    // DYNAMIC ARRAY
     ////////////////////////////////////////////////////////////
 
-    struct Stretchy_Buffer
+    template <typename T>
+    struct Dynamic_Array
     {
         size_t capacity;
         size_t size;
-        char *data;
+        T *data;
 
-        void push(const char *that_data, size_t that_size)
+        void push(T item)
         {
-            if (size + that_size > capacity) {
-                capacity = 2 * capacity + that_size;
-                data = (char*)realloc((void*)data, capacity);
+            if (size + 1 > capacity) {
+                capacity = data ? 2 * capacity : 256;
+                data = (T*)realloc((void*)data, capacity * sizeof(T));
             }
 
-            memcpy(data + size, that_data, that_size);
-            size += that_size;
+            memcpy(data + size, &item, sizeof(T));
+            size += 1;
         }
 
-        template <typename T>
-        void push(T x)
+        bool contains(T item)
         {
-            push((char*) &x, sizeof(x));
+            for (size_t i = 0; i < size; ++i) {
+                if (item == data[i]) {
+                    return true;
+                }
+            }
+
+            return false;
         }
     };
 
-    void print1(FILE *stream, Stretchy_Buffer buffer)
+    ////////////////////////////////////////////////////////////
+    // STRETCHY BUFFER
+    ////////////////////////////////////////////////////////////
+
+    namespace deprecated {
+        struct Stretchy_Buffer
+        {
+            size_t capacity;
+            size_t size;
+            char *data;
+
+            void push(const char *that_data, size_t that_size)
+            {
+                if (size + that_size > capacity) {
+                    capacity = 2 * capacity + that_size;
+                    data = (char*)realloc((void*)data, capacity);
+                }
+
+                memcpy(data + size, that_data, that_size);
+                size += that_size;
+            }
+
+            template <typename T>
+            void push(T x)
+            {
+                push((char*) &x, sizeof(x));
+            }
+        };
+    }
+
+    using Stretchy_Buffer [[deprecated("Use Dynamic_Array instead")]] = deprecated::Stretchy_Buffer;
+
+    [[deprecated("Use Dynamic_Array instead")]]
+    void print1(FILE *stream, deprecated::Stretchy_Buffer buffer)
     {
         fwrite(buffer.data, 1, buffer.size, stream);
     }

@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.16.0 — std replacement for C++. Designed to aid developers
+// aids — 0.17.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,8 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.17.0 Dynamic_Array::concat()
+//          Dynamic_Array::expand_capacity()
 //   0.16.0 Dynamic_Array
 //          deprecate Stretchy_Buffer
 //   0.15.0 Make min() and max() variadic
@@ -443,15 +445,30 @@ namespace aids
         size_t size;
         T *data;
 
+        void expand_capacity()
+        {
+            capacity = data ? 2 * capacity : 256;
+            data = (T*)realloc((void*)data, capacity * sizeof(T));
+        }
+
         void push(T item)
         {
-            if (size + 1 > capacity) {
-                capacity = data ? 2 * capacity : 256;
-                data = (T*)realloc((void*)data, capacity * sizeof(T));
+            while (size + 1 > capacity) {
+                expand_capacity();
             }
 
             memcpy(data + size, &item, sizeof(T));
             size += 1;
+        }
+
+        void concat(const T *items, size_t items_count)
+        {
+            while (size + 1 > capacity) {
+                expand_capacity();
+            }
+
+            memcpy(data + size, items, sizeof(T) * items_count);
+            size += items_count;
         }
 
         bool contains(T item)

@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.18.0 — std replacement for C++. Designed to aid developers
+// aids — 0.19.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.19.0 unwrap_or_panic()
 //   0.18.0 Rename Args::pop() -> Args::shift()
 //          Add more details to Stretchy_Buffer deprecation message
 //   0.17.0 Dynamic_Array::concat()
@@ -773,6 +774,17 @@ namespace aids
     {
         (print1(stream, args), ...);
         print1(stream, '\n');
+    }
+
+    template <typename T, typename... Args>
+    T unwrap_or_panic(Maybe<T> maybe, Args... args)
+    {
+        if (!maybe.has_value) {
+            println(stderr, args...);
+            exit(1);
+        }
+
+        return maybe.unwrap;
     }
 
     void print1(FILE *stream, Pad pad)

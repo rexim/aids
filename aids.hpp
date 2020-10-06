@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.20.0 — std replacement for C++. Designed to aid developers
+// aids — 0.21.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.21.0 void sprint1(String_Buffer *buffer, unsigned int x)
 //   0.20.0 Escape
 //   0.19.0 unwrap_or_panic()
 //   0.18.0 Rename Args::pop() -> Args::shift()
@@ -612,6 +613,15 @@ namespace aids
             buffer->data + buffer->size,
             buffer->capacity - buffer->size,
             "%llu", x);
+        buffer->size = min(buffer->size + n, buffer->capacity - 1);
+    }
+
+    void sprint1(String_Buffer *buffer, unsigned int x)
+    {
+        int n = snprintf(
+            buffer->data + buffer->size,
+            buffer->capacity - buffer->size,
+            "%u", x);
         buffer->size = min(buffer->size + n, buffer->capacity - 1);
     }
 

@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.21.0 — std replacement for C++. Designed to aid developers
+// aids — 0.22.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.22.0 panic()
 //   0.21.0 void sprint1(String_Buffer *buffer, unsigned int x)
 //   0.20.0 Escape
 //   0.19.0 unwrap_or_panic()
@@ -792,12 +793,19 @@ namespace aids
         print1(stream, '\n');
     }
 
+
+    template <typename... Args>
+    void panic(Args... args)
+    {
+        println(stderr, args...);
+        exit(1);
+    }
+
     template <typename T, typename... Args>
     T unwrap_or_panic(Maybe<T> maybe, Args... args)
     {
         if (!maybe.has_value) {
-            println(stderr, args...);
-            exit(1);
+            panic(args...);
         }
 
         return maybe.unwrap;

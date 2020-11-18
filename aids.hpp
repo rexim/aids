@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.22.0 — std replacement for C++. Designed to aid developers
+// aids — 0.23.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,8 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.23.0 code_to_utf8()
+//          struct Utf8_Char
 //   0.22.0 panic()
 //   0.21.0 void sprint1(String_Buffer *buffer, unsigned int x)
 //   0.20.0 Escape
@@ -849,6 +851,89 @@ namespace aids
     ////////////////////////////////////////////////////////////
     // UTF-8
     ////////////////////////////////////////////////////////////
+
+    struct Utf8_Char {
+        uint8_t bytes[4];
+        size_t count;
+    };
+
+    void print1(FILE *stream, Utf8_Char uchar)
+    {
+        print(stream, String_View {uchar.count, reinterpret_cast<const char*>(uchar.bytes)});
+    }
+
+    Utf8_Char code_to_utf8(uint32_t code)
+    {
+        if (0x0000 <= code && code <= 0x007F) {
+            // 0xxxxxxx
+            // 1 byte
+            Utf8_Char result = {
+                {(uint8_t) code, 0, 0, 0},
+                1,
+            };
+            return result;
+        } else if (0x0080 <= code && code <= 0x07FF) {
+            // 110xxxxx 10xxxxxx
+            // 2 bytes
+            const uint32_t header = 0b00000011000000;
+            const uint32_t extend = 0b00000010000000;
+            const uint32_t mask0  = 0b00111111000000;
+            const uint32_t mask1  = 0b00000000111111;
+
+            Utf8_Char result = {
+                {
+                    (uint8_t) (((code & mask0) >> 6) | header),
+                    (uint8_t) (((code & mask1) >> 0) | extend),
+                    0,
+                    0
+                },
+                2
+            };
+
+            return result;
+        } else if (0x0800 <= code && code <= 0xFFFF) {
+            // 3 bytes
+            // 1110xxxx 10xxxxxx 10xxxxxx
+            const uint32_t header = 0b0000000011100000;
+            const uint32_t extend = 0b0000000010000000;
+            const uint32_t mask0  = 0b1111000000000000;
+            const uint32_t mask1  = 0b0000111111000000;
+            const uint32_t mask2  = 0b0000000000111111;
+
+            Utf8_Char result = {
+                {
+                    (uint8_t) (((code & mask0) >> 12) | header),
+                    (uint8_t) (((code & mask1) >> 6)  | extend),
+                    (uint8_t) (((code & mask2) >> 0)  | extend),
+                    0
+                },
+                3
+            };
+            return result;
+        } else if (0x10000 <= code && code <= 0x10FFFF) {
+            // 4 bytes
+            // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+            const uint32_t header = 0b000000000000011110000;
+            const uint32_t extend = 0b000000000000010000000;
+            const uint32_t mask0  = 0b111000000000000000000;
+            const uint32_t mask1  = 0b000111111000000000000;
+            const uint32_t mask2  = 0b000000000111111000000;
+            const uint32_t mask3  = 0b000000000000000111111;
+
+            Utf8_Char result = {
+                {
+                    (uint8_t) (((code & mask0) >> 18) | header),
+                    (uint8_t) (((code & mask1) >> 12) | extend),
+                    (uint8_t) (((code & mask2) >> 6)  | extend),
+                    (uint8_t) (((code & mask3) >> 0)  | extend),
+                },
+                4
+            };
+            return result;
+        } else {
+            panic("The code point is too big");
+        }
+    }
 
     Maybe<uint32_t> utf8_get_code(String_View view, size_t *size)
     {

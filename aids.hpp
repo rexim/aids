@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.23.0 — std replacement for C++. Designed to aid developers
+// aids — 0.24.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,11 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.24.0 String_View Utf8_Char::view()
+//          struct Hex
+//          void print1(FILE *stream, Hex<uint32_t> hex)
+//          struct HEX
+//          void print1(FILE *stream, HEX<uint32_t> hex)
 //   0.23.0 code_to_utf8()
 //          struct Utf8_Char
 //   0.22.0 panic()
@@ -855,6 +860,16 @@ namespace aids
     struct Utf8_Char {
         uint8_t bytes[4];
         size_t count;
+
+        String_View view()
+        {
+            String_View result = {
+                count,
+                reinterpret_cast<const char *>(bytes)
+            };
+
+            return result;
+        }
     };
 
     void print1(FILE *stream, Utf8_Char uchar)
@@ -930,9 +945,10 @@ namespace aids
                 4
             };
             return result;
-        } else {
-            panic("The code point is too big");
         }
+
+        panic("The code point is too big");
+        return {};
     }
 
     Maybe<uint32_t> utf8_get_code(String_View view, size_t *size)
@@ -987,6 +1003,28 @@ namespace aids
         }
 
         return {};
+    }
+
+    template <typename T>
+    struct Hex
+    {
+        T unwrap;
+    };
+
+    void print1(FILE *stream, Hex<uint32_t> hex)
+    {
+        fprintf(stream, "%x", hex.unwrap);
+    }
+
+    template <typename T>
+    struct HEX
+    {
+        T unwrap;
+    };
+
+    void print1(FILE *stream, HEX<uint32_t> hex)
+    {
+        fprintf(stream, "%X", hex.unwrap);
     }
 }
 

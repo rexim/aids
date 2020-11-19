@@ -15,11 +15,13 @@ int main(int argc, char *argv[])
          ++expected_code)
     {
         auto uchar = code_to_utf8(expected_code);
+        auto uchar_view = uchar.view();
 
         size_t size = 0;
         auto actual_code = unwrap_or_panic(
-            utf8_get_code(uchar.view(), &size),
-            "TODO: good error messages for failed utf8 decoding");
+            utf8_get_code(uchar_view, &size),
+            "FAILED: could not decode UTF-8 sequence ", Hex_Bytes { uchar_view },
+            " into a Unicode code point ", HEX<uint32_t> { expected_code });
 
         if (expected_code != actual_code) {
             panic("FAILED: ",

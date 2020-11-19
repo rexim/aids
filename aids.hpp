@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.24.0 — std replacement for C++. Designed to aid developers
+// aids — 0.25.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,10 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.25.0 void print1(FILE *stream, Hex<char> hex)
+//          void print1(FILE *stream, HEX<char> hex)
+//          struct Hex_Bytes
+//          void print1(FILE *stream, Hex_Bytes hex_bytes)
 //   0.24.0 String_View Utf8_Char::view()
 //          struct Hex
 //          void print1(FILE *stream, Hex<uint32_t> hex)
@@ -1016,6 +1020,11 @@ namespace aids
         fprintf(stream, "%x", hex.unwrap);
     }
 
+    void print1(FILE *stream, Hex<char> hex)
+    {
+        fprintf(stream, "%hhx", hex.unwrap);
+    }
+
     template <typename T>
     struct HEX
     {
@@ -1025,6 +1034,25 @@ namespace aids
     void print1(FILE *stream, HEX<uint32_t> hex)
     {
         fprintf(stream, "%X", hex.unwrap);
+    }
+
+    void print1(FILE *stream, HEX<char> hex)
+    {
+        fprintf(stream, "%hhX", hex.unwrap);
+    }
+
+    struct Hex_Bytes
+    {
+        String_View unwrap;
+    };
+
+    void print1(FILE *stream, Hex_Bytes hex_bytes)
+    {
+        print(stream, "[");
+        for (size_t i = 0; i < hex_bytes.unwrap.count; ++i) {
+            print(stream, i == 0 ? "" : ", ", Hex<char> { hex_bytes.unwrap.data[i] });
+        }
+        print(stream, "]");
     }
 }
 

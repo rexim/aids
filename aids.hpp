@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.26.0 — std replacement for C++. Designed to aid developers
+// aids — 0.27.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.27.0 struct Hash_Map
 //   0.26.0 panic() is marked with [[noreturn]] attribute
 //          code_to_utf8() implementation is refactored in a backward compatible way
 //   0.25.0 void print1(FILE *stream, Hex<char> hex)
@@ -1031,6 +1032,107 @@ namespace aids
             print(stream, i == 0 ? "" : ", ", Hex<char> { hex_bytes.unwrap.data[i] });
         }
         print(stream, "]");
+    }
+
+    ////////////////////////////////////////////////////////////
+    // Hash_Map
+    ////////////////////////////////////////////////////////////
+
+    // NOTE: stolen from http://www.cse.yorku.ca/~oz/hash.html
+    unsigned long hash(String_View str)
+    {
+        unsigned long hash = 5381;
+        for (size_t i = 0; i < str.count; ++i) {
+            hash = ((hash << 5) + hash) + str.data[i];
+        }
+        return hash;
+    }
+
+    template <typename Key, typename Value>
+    struct Hash_Map
+    {
+        struct Bucket
+        {
+            Key key;
+            Maybe<Value> value;
+        };
+
+        // TODO: Maybe<Bucket> *buckets
+        Bucket *buckets;
+        size_t capacity;
+        size_t size;
+
+        void extend_capacity()
+        {
+            const size_t HASH_MAP_INITIAL_CAPACITY = 256;
+
+            if (buckets == nullptr) {
+                assert(capacity == 0);
+                assert(size == 0);
+
+                buckets = (Bucket*) calloc(HASH_MAP_INITIAL_CAPACITY, sizeof(Bucket));
+                capacity = HASH_MAP_INITIAL_CAPACITY;
+                size = 0;
+            } else {
+                Hash_Map<Key, Value> new_hash_map = {
+                    (Bucket*) calloc(capacity * 2, sizeof(Bucket)),
+                    capacity * 2,
+                    0
+                };
+
+                for (size_t i = 0; i < capacity; ++i) {
+                    if (buckets[i].value.has_value) {
+                        new_hash_map.insert(
+                            buckets[i].key,
+                            buckets[i].value.unwrap);
+                    }
+                }
+
+                free(buckets);
+
+                *this = new_hash_map;
+            }
+        }
+
+        void insert(Key key, Value value)
+        {
+            if (size >= capacity) {
+                extend_capacity();
+            }
+
+            auto hk = hash(key) & (capacity - 1);
+            while (buckets[hk].value.has_value && buckets[hk].key != key) {
+                hk = (hk + 1) & (capacity - 1);
+            }
+            buckets[hk].key = key;
+            buckets[hk].value = {true, value};
+        }
+
+        Maybe<Value*> get(Key key)
+        {
+            auto hk = hash(key) & (capacity - 1);
+            for (size_t i = 0;
+                 i < capacity
+                     && buckets[hk].value.has_value
+                     && buckets[hk].key != key;
+                 ++i) {
+                hk = (hk + 1) & (capacity - 1);
+            }
+
+            if (buckets && buckets[hk].value.has_value && buckets[hk].key == key) {
+                return {true, &buckets[hk].value.unwrap};
+            } else {
+                return {};
+            }
+        }
+    };
+
+    template <typename Key, typename Value>
+    void destroy(Hash_Map<Key, Value> hash_map)
+    {
+        if (hash_map.buckets) {
+            free(hash_map.buckets);
+        }
     }
 }
 

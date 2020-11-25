@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.27.0 — std replacement for C++. Designed to aid developers
+// aids — 0.28.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,7 +30,8 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
-//   0.27.0 struct Hash_Map
+//   0.28.0 struct Hash_Map
+//   0.27.0 NEVER HAPPENED
 //   0.26.0 panic() is marked with [[noreturn]] attribute
 //          code_to_utf8() implementation is refactored in a backward compatible way
 //   0.25.0 void print1(FILE *stream, Hex<char> hex)
@@ -1054,11 +1055,11 @@ namespace aids
         struct Bucket
         {
             Key key;
-            Maybe<Value> value;
+            Value value;
         };
 
         // TODO: Maybe<Bucket> *buckets
-        Bucket *buckets;
+        Maybe<Bucket> *buckets;
         size_t capacity;
         size_t size;
 
@@ -1070,21 +1071,21 @@ namespace aids
                 assert(capacity == 0);
                 assert(size == 0);
 
-                buckets = (Bucket*) calloc(HASH_MAP_INITIAL_CAPACITY, sizeof(Bucket));
+                buckets = (Maybe<Bucket>*) calloc(HASH_MAP_INITIAL_CAPACITY, sizeof(*buckets));
                 capacity = HASH_MAP_INITIAL_CAPACITY;
                 size = 0;
             } else {
                 Hash_Map<Key, Value> new_hash_map = {
-                    (Bucket*) calloc(capacity * 2, sizeof(Bucket)),
+                    (Maybe<Bucket>*) calloc(capacity * 2, sizeof(*buckets)),
                     capacity * 2,
                     0
                 };
 
                 for (size_t i = 0; i < capacity; ++i) {
-                    if (buckets[i].value.has_value) {
+                    if (buckets[i].has_value) {
                         new_hash_map.insert(
-                            buckets[i].key,
-                            buckets[i].value.unwrap);
+                            buckets[i].unwrap.key,
+                            buckets[i].unwrap.value);
                     }
                 }
 
@@ -1101,11 +1102,13 @@ namespace aids
             }
 
             auto hk = hash(key) & (capacity - 1);
-            while (buckets[hk].value.has_value && buckets[hk].key != key) {
+            while (buckets[hk].has_value && buckets[hk].unwrap.key != key) {
                 hk = (hk + 1) & (capacity - 1);
             }
-            buckets[hk].key = key;
-            buckets[hk].value = {true, value};
+            buckets[hk].has_value = true;
+            buckets[hk].unwrap.key = key;
+            buckets[hk].unwrap.value = value;
+            size += 1;
         }
 
         Maybe<Value*> get(Key key)
@@ -1113,14 +1116,14 @@ namespace aids
             auto hk = hash(key) & (capacity - 1);
             for (size_t i = 0;
                  i < capacity
-                     && buckets[hk].value.has_value
-                     && buckets[hk].key != key;
+                     && buckets[hk].has_value
+                     && buckets[hk].unwrap.key != key;
                  ++i) {
                 hk = (hk + 1) & (capacity - 1);
             }
 
-            if (buckets && buckets[hk].value.has_value && buckets[hk].key == key) {
-                return {true, &buckets[hk].value.unwrap};
+            if (buckets && buckets[hk].has_value && buckets[hk].unwrap.key == key) {
+                return {true, &buckets[hk].unwrap.value};
             } else {
                 return {};
             }

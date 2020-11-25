@@ -93,10 +93,10 @@ int main(int argc, char *argv[])
     }
 
     for (size_t i = 0; i < actual_freq.capacity; ++i) {
-        if (actual_freq.buckets[i].value.has_value) {
-            auto word = actual_freq.buckets[i].key;
+        if (actual_freq.buckets[i].has_value) {
+            auto word = actual_freq.buckets[i].unwrap.key;
             auto freq = expected_freq.get(word);
-            auto actual = actual_freq.buckets[i].value.unwrap;
+            auto actual = actual_freq.buckets[i].unwrap.value;
 
             println(stdout, word, "...");
 
@@ -110,6 +110,12 @@ int main(int argc, char *argv[])
                 panic("ERROR: unexpected frequency of word `", word, "`. Expected: ", expected, ", Actual: ", actual);
             }
         }
+    }
+
+    if (actual_freq.size != expected_freq.size) {
+        panic("ERROR: Unexpected size of hash map. ",
+              "Expected: ", expected_freq.size, ", ",
+              "Actual: ", actual_freq.size);
     }
 
     return 0;

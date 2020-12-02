@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.29.0 — std replacement for C++. Designed to aid developers
+// aids — 0.30.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.30.0 String_View String_View::chop_while(Predicate_Char predicate)
 //   0.29.0 void destroy(Dynamic_Array<T> dynamic_array)
 //   0.28.0 struct Hash_Map
 //   0.27.0 NEVER HAPPENED
@@ -272,6 +273,20 @@ namespace aids
         void grow(size_t n)
         {
             count += n;
+        }
+
+        using Predicate_Char = bool (*)(char);
+
+        String_View chop_while(Predicate_Char predicate)
+        {
+            size_t size = 0;
+            while (size < count && predicate(data[size])) {
+                size += 1;
+            }
+
+            auto result = subview(0, size);
+            chop(size);
+            return result;
         }
 
         String_View chop_by_delim(char delim)

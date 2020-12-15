@@ -207,6 +207,10 @@ namespace aids
 
             return !this->has_value && !that.has_value;
         }
+
+        T value_or(T t) const {
+            return (has_value ? unwrap : t);
+        }
     };
 
 #define unwrap_into(lvalue, maybe)              \

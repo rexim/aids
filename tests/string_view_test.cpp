@@ -19,5 +19,20 @@ int main(int argc, char *argv[])
         assert(true == foo.has_prefix("123456789"_sv));
         assert(false == foo.has_prefix("1234567890"_sv));
     }
+    // String_View::has_suffix
+    {
+        String_View foo = "123456789"_sv;
+        assert(true == foo.has_suffix(""_sv));
+        assert(true == foo.has_suffix("9"_sv));
+        assert(true == foo.has_suffix("89"_sv));
+        assert(true == foo.has_suffix("789"_sv));
+        assert(true == foo.has_suffix("6789"_sv));
+        assert(true == foo.has_suffix("56789"_sv));
+        assert(true == foo.has_suffix("456789"_sv));
+        assert(true == foo.has_suffix("3456789"_sv));
+        assert(true == foo.has_suffix("23456789"_sv));
+        assert(true == foo.has_suffix("123456789"_sv));
+        assert(false == foo.has_suffix("0123456789"_sv));
+    }
     return 0;
 }

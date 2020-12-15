@@ -12,3 +12,6 @@ utf8_test: utf8_test.cpp ../aids.hpp
 hash_map_test: hash_map_test.cpp ../aids.hpp
 	$(CXX) $(CXXFLAGS) -o hash_map_test hash_map_test.cpp $(LIBS)
 
+string_view_test: string_view_test.cpp ../aids.hpp
+	$(CXX) $(CXXFLAGS) -o string_view_test string_view_test.cpp $(LIBS)
+

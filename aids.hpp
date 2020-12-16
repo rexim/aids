@@ -1165,6 +1165,10 @@ namespace aids
             }
         }
 
+        bool contains(Key key) {
+            return get(key).has_value;
+        }
+
         Value *operator[](Key key)
         {
             {

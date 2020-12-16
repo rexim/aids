@@ -1,7 +1,7 @@
 CXXFLAGS=-I../ -std=c++17 -Wall -fno-exceptions -nodefaultlibs -ggdb
 LIBS=-lc
 
-all: cat gol sprintln utf8
+all: cat gol sprintln utf8 hashmap
 
 cat: cat.cpp ../aids.hpp
 	$(CXX) $(CXXFLAGS) -o cat cat.cpp $(LIBS)
@@ -14,4 +14,7 @@ sprintln: sprintln.cpp ../aids.hpp
 
 utf8: utf8.cpp ../aids.hpp
 	$(CXX) $(CXXFLAGS) -o utf8 utf8.cpp $(LIBS)
+
+hashmap: hashmap.cpp ../aids.hpp
+	$(CXX) $(CXXFLAGS) -o hashmap hashmap.cpp $(LIBS)
 

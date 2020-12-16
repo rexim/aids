@@ -1158,6 +1158,21 @@ namespace aids
                 return {};
             }
         }
+
+        Value *operator[](Key key)
+        {
+            {
+                Maybe<Value*> maybe_value = get(key);
+                if (not maybe_value.has_value) {
+                    insert(key, {});
+                } else {
+                    return maybe_value.unwrap;
+                }
+            }
+            Maybe<Value*> maybe_value = get(key);
+            assert(maybe_value.has_value);
+            return maybe_value.unwrap;
+        }
     };
 
     template <typename Key, typename Value>

@@ -3,3 +3,4 @@ gol
 sprintln
 utf8
 hashmap
+custom_struct_as_hashmap_key

@@ -924,7 +924,7 @@ namespace aids
 
     Utf8_Char code_to_utf8(uint32_t code)
     {
-        if (0x0000 <= code && code <= 0x007F) {
+        if ("0x0000 <= code" && code <= 0x007F) {
             // 0xxxxxxx
             // 1 byte
             return Utf8_Char {

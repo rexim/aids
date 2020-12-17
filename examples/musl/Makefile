@@ -5,9 +5,6 @@ LIBS=../../3rd_party/musl-${MUSL_VERSION}-dist/usr/local/musl/lib/crt*.o \
 	 -L ../../3rd_party/musl-${MUSL_VERSION}-dist/usr/local/musl/lib/ \
 	 -l:libc.a
 
-#LIBS=-L ../../3rd_party/musl-${MUSL_VERSION}-dist/usr/local/musl/lib/ \
-	 -l:libc.a
-
 .PHONY: run
 
 run: ./hello

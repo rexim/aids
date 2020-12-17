@@ -18,5 +18,8 @@ int main(int argc, char *argv[])
     *map["baz"_sv] = 2020.f;
     assert(2020.f == *map["baz"_sv]);
 
+    assert(true == map.contains("baz"_sv));
+    assert(false == map.contains("foobar"_sv));
+
     return 0;
 }

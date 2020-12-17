@@ -1,7 +1,7 @@
 CXXFLAGS=-I../ -std=c++17 -Wall -fno-exceptions -nodefaultlibs -ggdb
 LIBS=-lc
 
-all: cat gol sprintln utf8 hashmap
+all: cat gol sprintln utf8 hashmap custom_struct_as_hashmap_key
 
 cat: cat.cpp ../aids.hpp
 	$(CXX) $(CXXFLAGS) -o cat cat.cpp $(LIBS)
@@ -17,4 +17,7 @@ utf8: utf8.cpp ../aids.hpp
 
 hashmap: hashmap.cpp ../aids.hpp
 	$(CXX) $(CXXFLAGS) -o hashmap hashmap.cpp $(LIBS)
+
+custom_struct_as_hashmap_key: custom_struct_as_hashmap_key.cpp ../aids.hpp
+	$(CXX) $(CXXFLAGS) -o custom_struct_as_hashmap_key custom_struct_as_hashmap_key.cpp $(LIBS)
 

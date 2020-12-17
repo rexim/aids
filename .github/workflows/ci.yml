@@ -1,0 +1,44 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  build-linux-gcc:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v1
+      - name: build
+        run: |
+          cd examples
+          make -B
+          cd ../tests
+          make -B
+        env:
+          CC: gcc
+          CXX: g++
+  build-linux-clang:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v1
+      - name: build
+        run: |
+          cd examples
+          make -B
+          cd ../tests
+          make -B
+        env:
+          CC: clang
+          CXX: clang++
+  build-macos:
+    runs-on: macOS-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: build
+        run: |
+          cd examples
+          make -B
+          cd ../tests
+          make -B
+        env:
+          CC: clang
+          CXX: clang++
+# TODO(#14): no MSVC on Windows build

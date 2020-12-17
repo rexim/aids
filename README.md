@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/tsoding/aids/workflows/CI/badge.svg)](https://github.com/tsoding/aids/actions)
+[![Build Status](https://github.com/rexim/aids/workflows/CI/badge.svg)](https://github.com/rexim/aids/actions)
 
 # aids
 

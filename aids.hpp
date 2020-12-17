@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.33.0 — std replacement for C++. Designed to aid developers
+// aids — 0.34.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.34.0 Hash_Map::contains(Key key)
 //   0.33.0 Maybe::value_or(T t)
 //   0.32.0 Hash_Map::operator[](Key key)
 //   0.31.0 String_View::has_suffix(String_View suffix)

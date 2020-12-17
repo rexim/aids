@@ -1,10 +1,12 @@
 #include "aids.hpp"
 
 int main(int argc, char *argv[]) {
-    if (argc >= 2 && (0 == strcmp(argv[1], "--traditional"))) {
+    auto args = aids::Args{argc, argv};
+    args.shift();               // skip program
+
+    if (!args.empty() && !strcmp(args.shift(), "--traditional")) {
         aids::println(stdout, "hello, world");
     } else {
         aids::println(stdout, "Hello, world!");
     }
 }
-

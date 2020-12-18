@@ -1088,7 +1088,16 @@ namespace aids
         return hash;
     }
 
+#if __cplusplus > 201709
+    template <typename T>
+    concept Hashable = requires(T a, T b) {
+        { hash(a) };
+        { a != b };
+    };
+    template <Hashable Key, typename Value>
+#else
     template <typename Key, typename Value>
+#endif
     struct Hash_Map
     {
         struct Bucket

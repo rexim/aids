@@ -47,11 +47,14 @@ jobs:
       - uses: actions/checkout@v1
         # this runs vcvarsall for us, so we get the MSVC toolchain in PATH.
       - uses: seanmiddleditch/gha-setup-vsdevenv@master
-      - name: build
+      - name: build examples
         shell: cmd
         # this replaces default PowerShell, which can't fail the build
         run: |
           cd examples
           ./build_msvc.bat
-          cd ../tests
+      - name: build tests
+        shell: cmd
+        run: |
+          cd tests
           ./build_msvc.bat

@@ -31,7 +31,7 @@ unsigned long hash(Foo foo)
     return hash(foo.i) ^ hash(foo.sv);
 }
 
-int main(int, char)
+int main(int, char *[])
 {
     aids::Hash_Map<Foo, int> map{};
     *map[Foo{42, "forty-tooth"_sv}] = 42;

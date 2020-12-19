@@ -2,7 +2,7 @@
 
 using namespace aids;
 
-int main(int, char)
+int main(int, char *[])
 {
     // String_View::has_prefix
     {

@@ -20,7 +20,7 @@ void code_points_of(const char *cstr)
     }
 }
 
-int main(int, char)
+int main(int, char *[])
 {
     code_points_of("Hello, World!");
     code_points_of("Привет, Мир!");

@@ -1175,7 +1175,7 @@ namespace aids
         {
             {
                 Maybe<Value*> maybe_value = get(key);
-                if (not maybe_value.has_value) {
+                if (!maybe_value.has_value) {
                     insert(key, {});
                 } else {
                     return maybe_value.unwrap;

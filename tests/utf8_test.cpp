@@ -2,7 +2,7 @@
 
 using namespace aids;
 
-int main(int argc, char *argv[])
+int main(int, char)
 {
     const uint32_t UNICODE_LOW = 0x0000;
     const uint32_t UNICODE_HIGH = 0x10FFFF;

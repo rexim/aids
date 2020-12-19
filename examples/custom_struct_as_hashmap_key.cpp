@@ -15,7 +15,7 @@ bool operator==(Foo lhs, Foo rhs) {
 // Nevertheless, let's consider checking not only for `hash(Key)` (see #8),
 // but `operator!=(Key, Key)` as well
 bool operator!=(Foo lhs, Foo rhs) {
-    return not (lhs == rhs);
+    return !(lhs == rhs);
 }
 
 unsigned long hash(int i)
@@ -31,7 +31,7 @@ unsigned long hash(Foo foo)
     return hash(foo.i) ^ hash(foo.sv);
 }
 
-int main(int argc, char *argv[])
+int main(int, char)
 {
     aids::Hash_Map<Foo, int> map{};
     *map[Foo{42, "forty-tooth"_sv}] = 42;

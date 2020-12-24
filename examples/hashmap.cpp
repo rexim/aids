@@ -2,7 +2,7 @@
 
 using namespace aids;
 
-int main(int argc, char *argv[])
+int main(int, char *[])
 {
     Hash_Map<String_View, float> map{};
     map.insert("foo"_sv, 2.0f);

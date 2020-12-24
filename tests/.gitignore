@@ -1,3 +1,7 @@
 utf8_test
 hash_map_test
 string_view_test
+*.exe
+*.ilk
+*.obj
+*.pdb

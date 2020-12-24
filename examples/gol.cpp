@@ -1,5 +1,10 @@
-#include <unistd.h>
 #include "aids.hpp"
+
+#ifdef _MSC_VER
+#include "unistd_win.h"
+#else
+#include <unistd.h>
+#endif
 
 const int W = 5;
 const int H = 5;
@@ -78,6 +83,18 @@ Board boards[2] = {
 
 int main()
 {
+#ifdef _MSC_VER
+    // https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences#example-of-sgr-terminal-sequences
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut == INVALID_HANDLE_VALUE) return GetLastError();
+
+    DWORD dwMode = 0;
+    if (!GetConsoleMode(hOut, &dwMode)) return GetLastError();
+
+    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    if (!SetConsoleMode(hOut, dwMode)) return GetLastError();
+#endif
+
     int fb = 0;
 
     boards[fb].render(stdout);
@@ -90,6 +107,7 @@ int main()
         aids::print(stdout, "\033[", W, "D");
         boards[fb].render(stdout);
         usleep(200000);
+        if (false) break;
     }
 
     return 0;

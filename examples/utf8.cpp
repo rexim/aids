@@ -14,13 +14,13 @@ void code_points_of(const char *cstr)
             s.chop(size);
         } else {
             assert(cstr <= s.data);
-            println(stderr, "STRING CONTAINS INVALID UTF-8 BYTE SEQUENCE AT BYTE INDEX ", s.data - cstr, "!!!");
+            println(stderr, "STRING CONTAINS INVALID UTF-8 BYTE SEQUENCE AT BYTE INDEX ", (size_t) (s.data - cstr), "!!!");
             abort();
         }
     }
 }
 
-int main(int argc, char *argv[])
+int main(int, char *[])
 {
     code_points_of("Hello, World!");
     code_points_of("Привет, Мир!");

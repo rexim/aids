@@ -30,7 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
-//   0.35.1 Fix compilation when using todo() and unreachable()
+//   0.36.0 Fix compilation when using todo() and unreachable()
 //   0.35.0 [[noreturn]] void unreachable(Args... args)
 //          [[noreturn]] void todo(Args... args)
 //   0.34.1 Fix -Wtype-limits warning in utf8_get_code()

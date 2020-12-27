@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.34.1 — std replacement for C++. Designed to aid developers
+// aids — 0.35.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,8 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.35.0 [[noreturn]] void unreachable(Args... args)
+//          [[noreturn]] void todo(Args... args)
 //   0.34.1 Fix -Wtype-limits warning in utf8_get_code()
 //   0.34.0 Hash_Map::contains(Key key)
 //   0.33.0 Maybe::value_or(T t)
@@ -847,6 +849,17 @@ namespace aids
         print1(stream, '\n');
     }
 
+    template <typename... Args>
+    [[noreturn]] void unreachable(Args... args)
+    {
+        panic("Unreachable: ", args...);
+    }
+
+    template <typename... Args>
+    [[noreturn]] void todo(Args... args)
+    {
+        panic("TODO: ", args...);
+    }
 
     template <typename... Args>
     [[noreturn]] void panic(Args... args)

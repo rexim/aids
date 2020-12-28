@@ -105,6 +105,8 @@
 // Contributors:
 //   Alexey Kutepov (github:rexim)
 //   Aodhnait Étaín (github:aodhneine)
+//   Jarosław Wiosna (github:JaroslawWiosna)
+//   Danil Kolumbet (github:kolumb)
 
 #ifndef AIDS_HPP_
 #define AIDS_HPP_

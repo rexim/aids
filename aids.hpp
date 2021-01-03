@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.35.1 — std replacement for C++. Designed to aid developers
+// aids — 0.36.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.36.0 void destroy(String_View sv)
 //   0.35.1 Fix compilation when using todo() and unreachable()
 //   0.35.0 [[noreturn]] void unreachable(Args... args)
 //          [[noreturn]] void todo(Args... args)
@@ -489,6 +490,11 @@ namespace aids
         if (read_size != (size_t) size && ferror(f)) return {};
 
         return {true, {static_cast<size_t>(size), static_cast<const char*>(data)}};
+    }
+
+    void destroy(String_View sv)
+    {
+        free((void*) sv.data);
     }
 
     ////////////////////////////////////////////////////////////

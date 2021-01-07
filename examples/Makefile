@@ -1,5 +1,10 @@
+ifdef OS # windows nt (mingw of msys2)
+CXXFLAGS=-I../ -std=c++17 -Wall -fno-exceptions -ggdb
+LIBS=
+else # linux
 CXXFLAGS=-I../ -std=c++17 -Wall -fno-exceptions -nodefaultlibs -ggdb
 LIBS=-lc
+endif
 
 all: cat gol sprintln utf8 hashmap custom_struct_as_hashmap_key
 

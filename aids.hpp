@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.40.0 — std replacement for C++. Designed to aid developers
+// aids — 1.0.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,8 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   1.0.0  remove Stretchy_Buffer{}
+//          remove Args::pop()
 //   0.40.0 Fix MSVC warnings
 //   0.39.0 Fix common GCC warnings
 //   0.38.0 struct Mtor{}
@@ -637,44 +639,6 @@ namespace aids
     }
 
     ////////////////////////////////////////////////////////////
-    // STRETCHY BUFFER
-    ////////////////////////////////////////////////////////////
-
-    namespace deprecated {
-        struct Stretchy_Buffer
-        {
-            size_t capacity;
-            size_t size;
-            char *data;
-
-            void push(const char *that_data, size_t that_size)
-            {
-                if (size + that_size > capacity) {
-                    capacity = 2 * capacity + that_size;
-                    data = (char*)realloc((void*)data, capacity);
-                }
-
-                memcpy(data + size, that_data, that_size);
-                size += that_size;
-            }
-
-            template <typename T>
-            void push(T x)
-            {
-                push((char*) &x, sizeof(x));
-            }
-        };
-    }
-
-    using Stretchy_Buffer [[deprecated("Use Dynamic_Array instead. Stretchy_Buffer is limited to only `char`-s while Dynamic_Array<T> can work with any type T.")]] = deprecated::Stretchy_Buffer;
-
-    [[deprecated("Use Dynamic_Array instead. Stretchy_Buffer is limited to only `char`-s while Dynamic_Array<T> can work with any type T.")]]
-    void print1(FILE *stream, deprecated::Stretchy_Buffer buffer)
-    {
-        fwrite(buffer.data, 1, buffer.size, stream);
-    }
-
-    ////////////////////////////////////////////////////////////
     // ARGS
     ////////////////////////////////////////////////////////////
 
@@ -682,12 +646,6 @@ namespace aids
     {
         int argc;
         char **argv;
-
-        [[deprecated("Use Args::shift() instead. It was decided to rename `pop` to `shift` since it creates confusion with the pop operation of stacks which removes the elements from the other end. And shift is common operation in Bash and Perl (probably others) for parsing command line arguments.")]]
-        char *pop()
-        {
-            return shift();
-        }
 
         char *shift()
         {

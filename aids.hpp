@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 0.38.0 — std replacement for C++. Designed to aid developers
+// aids — 0.39.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.39.0 Fix common GCC warnings
 //   0.38.0 struct Mtor{}
 //          struct Fixed_Region{}
 //          Make allocator for read_file_as_string_view customizable
@@ -140,7 +141,7 @@ namespace aids
                 result[i] = def;
             }
             return result;
-        };
+        }
 
         template <typename T>
         void dealloc(T *ptr, size_t count)
@@ -149,7 +150,7 @@ namespace aids
         }
 
         template <typename T>
-        void dealloc(const T *ptr, size_t count)
+        void dealloc(const T *ptr, size_t)
         {
             free(const_cast<T*>(ptr));
         }

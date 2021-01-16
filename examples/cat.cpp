@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
             exit(1);
         }
         auto content = result.unwrap;
-        defer(free((void*) content.data));
+        defer(destroy(content));
 
         println(stdout, content);
     }

@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   0.40.0 Fix MSVC warnings
 //   0.39.0 Fix common GCC warnings
 //   0.38.0 struct Mtor{}
 //          struct Fixed_Region{}
@@ -144,7 +145,7 @@ namespace aids
         }
 
         template <typename T>
-        void dealloc(T *ptr, size_t count)
+        void dealloc(T *ptr, size_t)
         {
             free(ptr);
         }

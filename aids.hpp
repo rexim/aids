@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 1.2.0-rc — std replacement for C++. Designed to aid developers
+// aids — 1.2.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,7 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
-//   1.2.0-rc add String_View::as_cstr(Ator ator)
+//   1.2.0  add String_View::as_cstr(Ator ator)
 //   1.1.0  add constexpr Maybe<T> some(T x)
 //   1.0.0  remove Stretchy_Buffer{}
 //          remove Args::pop()

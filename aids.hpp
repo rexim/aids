@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 1.1.0 — std replacement for C++. Designed to aid developers
+// aids — 1.2.0-rc — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   1.2.0-rc add String_View::as_cstr(Ator ator)
 //   1.1.0  add constexpr Maybe<T> some(T x)
 //   1.0.0  remove Stretchy_Buffer{}
 //          remove Args::pop()
@@ -532,6 +533,17 @@ namespace aids
                 if (data[i] == x) {
                     result += 1;
                 }
+            }
+            return result;
+        }
+
+        template <typename Ator = Mtor>
+        char *as_cstr(Ator *ator = &mtor)
+        {
+            char *result = ator->template alloc<char>(count + 1);
+            if (result != nullptr) {
+                memcpy(result, data, count);
+                result[count] = '\0';
             }
             return result;
         }

@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 1.4.0 — std replacement for C++. Designed to aid developers
+// aids — 2.0.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   2.0.0  don't include the implementations unless AIDS_IMPLEMENTATION is defined
 //   1.4.0  require AIDS_IMPLEMENTATION defined before including aids.hpp
 //   1.3.1  reformat everything with astyle
 //   1.3.0  fix memory leak in read_file_as_string_view()
@@ -124,18 +125,6 @@
 //   Jarosław Wiosna (github:JaroslawWiosna)
 //   Danil Kolumbet (github:kolumb)
 
-#ifndef AIDS_IMPLEMENTATION
-#    ifdef _MSC_VER
-#        pragma message ("DEPRECATION NOTICE! Please add #define AIDS_IMPLEMENTATION before including \"aids.hpp\".")
-#        pragma message ("Aids is moving towards being an stb-style header-only library. For more info on what that means check https://raw.githubusercontent.com/nothings/stb/c9064e317699d2e495f36ba4f9ac037e88ee371a/docs/stb_howto.txt")
-#        pragma message ("Basically by default including \"aids.hpp\" does not include the implementations of the functions. To include the implementation you need to define AIDS_IMPLEMENTATION macro.")
-#    else
-#        warning "DEPRECATION NOTICE! Please add #define AIDS_IMPLEMENTATION before including \"aids.hpp\"."
-#        warning "Aids is moving towards being an stb-style header-only library. For more info on what that means check https://raw.githubusercontent.com/nothings/stb/c9064e317699d2e495f36ba4f9ac037e88ee371a/docs/stb_howto.txt"
-#        warning "Basically by default including \"aids.hpp\" does not include the implementations of the functions. To include the implementation you need to define AIDS_IMPLEMENTATION macro."
-#    endif
-#endif
-
 #ifndef AIDS_HPP_
 #define AIDS_HPP_
 
@@ -177,7 +166,7 @@ struct Mtor {
     }
 };
 
-Mtor mtor;
+extern Mtor mtor;
 
 template <size_t Capacity>
 struct Fixed_Region {
@@ -339,99 +328,26 @@ constexpr Maybe<T> some(T x)
 ////////////////////////////////////////////////////////////
 
 struct String_View {
+    using Predicate_Char = bool (*)(char);
+
     size_t count;
     const char *data;
 
     [[nodiscard]]
-    String_View trim_begin(void) const
-    {
-        String_View view = *this;
-
-        while (view.count != 0 && isspace(*view.data)) {
-            view.data  += 1;
-            view.count -= 1;
-        }
-        return view;
-    }
+    String_View trim_begin(void) const;
 
     [[nodiscard]]
-    String_View trim_end(void) const
-    {
-        String_View view = *this;
-
-        while (view.count != 0 && isspace(*(view.data + view.count - 1))) {
-            view.count -= 1;
-        }
-        return view;
-    }
+    String_View trim_end(void) const;
 
     [[nodiscard]]
-    String_View trim(void) const
-    {
-        return trim_begin().trim_end();
-    }
+    String_View trim(void) const;
 
-    void chop_back(size_t n)
-    {
-        count -= n < count ? n : count;
-    }
-
-    void chop(size_t n)
-    {
-        if (n > count) {
-            data += count;
-            count = 0;
-        } else {
-            data  += n;
-            count -= n;
-        }
-    }
-
-    void grow(size_t n)
-    {
-        count += n;
-    }
-
-    using Predicate_Char = bool (*)(char);
-
-    String_View chop_while(Predicate_Char predicate)
-    {
-        size_t size = 0;
-        while (size < count && predicate(data[size])) {
-            size += 1;
-        }
-
-        auto result = subview(0, size);
-        chop(size);
-        return result;
-    }
-
-    String_View chop_by_delim(char delim)
-    {
-        assert(data);
-
-        size_t i = 0;
-        while (i < count && data[i] != delim) i++;
-        String_View result = {i, data};
-        chop(i + 1);
-
-        return result;
-    }
-
-    String_View chop_word(void)
-    {
-        *this = trim_begin();
-
-        size_t i = 0;
-        while (i < count && !isspace(data[i])) i++;
-
-        String_View result = { i, data };
-
-        count -= i;
-        data  += i;
-
-        return result;
-    }
+    void chop_back(size_t n);
+    void chop(size_t n);
+    void grow(size_t n);
+    String_View chop_while(Predicate_Char predicate);
+    String_View chop_by_delim(char delim);
+    String_View chop_word(void);
 
     template <typename Integer>
     Maybe<Integer> from_hex() const
@@ -482,77 +398,16 @@ struct String_View {
         return { true, number * sign };
     }
 
-    Maybe<float> as_float() const
-    {
-        char buffer[300] = {};
-        memcpy(buffer, data, min(sizeof(buffer) - 1, count));
-        char *endptr = NULL;
-        float result = strtof(buffer, &endptr);
+    Maybe<float> as_float() const;
 
-        if (buffer > endptr || (size_t) (endptr - buffer) != count) {
-            return {};
-        }
+    String_View subview(size_t start, size_t count) const;
 
-        return some(result);
-    }
-
-
-    String_View subview(size_t start, size_t count) const
-    {
-        if (start + count <= this->count) {
-            return {count, data + start};
-        }
-
-        return {};
-    }
-
-    bool operator<(String_View b) const
-    {
-        auto a = *this;
-        while (a.count > 0 && b.count > 0) {
-            if (*a.data != *b.data) {
-                return *a.data < *b.data;
-            }
-            a.chop(1);
-            b.chop(1);
-        }
-
-        return a.count < b.count;
-    }
-
-    bool operator==(String_View view) const
-    {
-        if (this->count != view.count) return false;
-        return memcmp(this->data, view.data, this->count) == 0;
-    }
-
-    bool operator!=(String_View view) const
-    {
-        return !(*this == view);
-    }
-
-    bool has_prefix(String_View prefix) const
-    {
-        return prefix.count <= this->count
-               && this->subview(0, prefix.count) == prefix;
-    }
-
-    bool has_suffix(String_View suffix) const
-    {
-        return suffix.count <= this->count
-               && this->subview(this->count - suffix.count, suffix.count) == suffix;
-    }
-
-    size_t count_chars(char x) const
-    {
-        size_t result = 0;
-        for (size_t i = 0; i < count; ++i) {
-            if (data[i] == x) {
-                result += 1;
-            }
-        }
-        return result;
-    }
+    bool operator<(String_View b) const;
+    bool operator==(String_View view) const;
+    bool operator!=(String_View view) const;
+    bool has_prefix(String_View prefix) const;
+    bool has_suffix(String_View suffix) const;
+    size_t count_chars(char x) const;
 
     template <typename Ator = Mtor>
     char *as_cstr(Ator *ator = &mtor)
@@ -566,20 +421,10 @@ struct String_View {
     }
 };
 
-String_View operator ""_sv(const char *data, size_t count)
-{
-    return {count, data};
-}
+String_View operator ""_sv(const char *data, size_t count);
+String_View cstr_as_string_view(const char *cstr);
 
-String_View cstr_as_string_view(const char *cstr)
-{
-    return {strlen(cstr), cstr};
-}
-
-void print1(FILE *stream, String_View view)
-{
-    fwrite(view.data, 1, view.count, stream);
-}
+void print1(FILE *stream, String_View view);
 
 template <typename Ator = Mtor>
 Maybe<String_View> read_file_as_string_view(const char *filename,
@@ -610,10 +455,7 @@ Maybe<String_View> read_file_as_string_view(const char *filename,
     return some(String_View {static_cast<size_t>(size), static_cast<const char*>(data)});
 }
 
-void destroy(String_View sv)
-{
-    mtor.dealloc(sv.data, sv.count);
-}
+void destroy(String_View sv);
 
 ////////////////////////////////////////////////////////////
 // DYNAMIC ARRAY
@@ -707,18 +549,8 @@ struct Args {
     int argc;
     char **argv;
 
-    char *shift()
-    {
-        char *result = *argv;
-        argv += 1;
-        argc -= 1;
-        return result;
-    }
-
-    bool empty()
-    {
-        return argc == 0;
-    }
+    char *shift();
+    bool empty();
 };
 
 ////////////////////////////////////////////////////////////
@@ -730,97 +562,19 @@ struct String_Buffer {
     char *data;
     size_t size;
 
-    String_View view() const
-    {
-        return {size, data};
-    }
+    String_View view() const;
 };
 
-void sprint1(String_Buffer *buffer, const char *cstr)
-{
-    int n = snprintf(
-                buffer->data + buffer->size,
-                buffer->capacity - buffer->size,
-                "%s", cstr);
-    buffer->size = min(buffer->size + n, buffer->capacity - 1);
-}
-
-void sprint1(String_Buffer *buffer, String_View view)
-{
-    int n = snprintf(
-                buffer->data + buffer->size,
-                buffer->capacity - buffer->size,
-                "%.*s", (int) view.count, view.data);
-    buffer->size = min(buffer->size + n, buffer->capacity - 1);
-}
-
-void sprint1(String_Buffer *buffer, char c)
-{
-    int n = snprintf(
-                buffer->data + buffer->size,
-                buffer->capacity - buffer->size,
-                "%c", c);
-    buffer->size = min(buffer->size + n, buffer->capacity - 1);
-}
-
-void sprint1(String_Buffer *buffer, float f)
-{
-    int n = snprintf(
-                buffer->data + buffer->size,
-                buffer->capacity - buffer->size,
-                "%f", f);
-    buffer->size = min(buffer->size + n, buffer->capacity - 1);
-}
-
-void sprint1(String_Buffer *buffer, unsigned long long x)
-{
-    int n = snprintf(
-                buffer->data + buffer->size,
-                buffer->capacity - buffer->size,
-                "%llu", x);
-    buffer->size = min(buffer->size + n, buffer->capacity - 1);
-}
-
-void sprint1(String_Buffer *buffer, unsigned int x)
-{
-    int n = snprintf(
-                buffer->data + buffer->size,
-                buffer->capacity - buffer->size,
-                "%u", x);
-    buffer->size = min(buffer->size + n, buffer->capacity - 1);
-}
-
-void sprint1(String_Buffer *buffer, long unsigned int x)
-{
-    int n = snprintf(
-                buffer->data + buffer->size,
-                buffer->capacity - buffer->size,
-                "%lu", x);
-    buffer->size = min(buffer->size + n, buffer->capacity - 1);
-}
-
-void sprint1(String_Buffer *buffer, int x)
-{
-    int n = snprintf(
-                buffer->data + buffer->size,
-                buffer->capacity - buffer->size,
-                "%d", x);
-    buffer->size = min(buffer->size + n, buffer->capacity - 1);
-}
-
-void sprint1(String_Buffer *buffer, long int x)
-{
-    int n = snprintf(
-                buffer->data + buffer->size,
-                buffer->capacity - buffer->size,
-                "%ld", x);
-    buffer->size = min(buffer->size + n, buffer->capacity - 1);
-}
-
-void sprint1(String_Buffer *buffer, bool b)
-{
-    sprint1(buffer, b ? "true" : "false");
-}
+void sprint1(String_Buffer *buffer, const char *cstr);
+void sprint1(String_Buffer *buffer, String_View view);
+void sprint1(String_Buffer *buffer, char c);
+void sprint1(String_Buffer *buffer, float f);
+void sprint1(String_Buffer *buffer, unsigned long long x);
+void sprint1(String_Buffer *buffer, unsigned int x);
+void sprint1(String_Buffer *buffer, long unsigned int x);
+void sprint1(String_Buffer *buffer, int x);
+void sprint1(String_Buffer *buffer, long int x);
+void sprint1(String_Buffer *buffer, bool b);
 
 template <typename ... Types>
 void sprint(String_Buffer *buffer, Types... args)
@@ -850,28 +604,14 @@ struct Pad {
     char c;
 };
 
-void sprint1(String_Buffer *buffer, Pad pad)
-{
-    for (size_t i = 0; i < pad.n; ++i) {
-        sprint1(buffer, pad.c);
-    }
-}
+void sprint1(String_Buffer *buffer, Pad pad);
 
 struct Caps {
     String_View unwrap;
 };
 
-void sprint1(String_Buffer *buffer, Caps caps)
-{
-    for (size_t i = 0; i < caps.unwrap.count; ++i) {
-        sprint1(buffer, (char) toupper(caps.unwrap.data[i]));
-    }
-}
-
-void sprint1(String_Buffer *buffer, String_Buffer another_buffer)
-{
-    sprint1(buffer, another_buffer.view());
-}
+void sprint1(String_Buffer *buffer, Caps caps);
+void sprint1(String_Buffer *buffer, String_Buffer another_buffer);
 
 struct Escape {
     String_View unwrap;
@@ -881,50 +621,15 @@ struct Escape {
 // PRINT
 ////////////////////////////////////////////////////////////
 
-void print1(FILE *stream, const char *s)
-{
-    fwrite(s, 1, strlen(s), stream);
-}
-
-void print1(FILE *stream, char *s)
-{
-    fwrite(s, 1, strlen(s), stream);
-}
-
-void print1(FILE *stream, char c)
-{
-    fputc(c, stream);
-}
-
-void print1(FILE *stream, float f)
-{
-    fprintf(stream, "%f", f);
-}
-
-void print1(FILE *stream, unsigned long long x)
-{
-    fprintf(stream, "%llu", x);
-}
-
-void print1(FILE *stream, long unsigned int x)
-{
-    fprintf(stream, "%lu", x);
-}
-
-void print1(FILE *stream, unsigned int x)
-{
-    fprintf(stream, "%u", x);
-}
-
-void print1(FILE *stream, int x)
-{
-    fprintf(stream, "%d", x);
-}
-
-void print1(FILE *stream, long int x)
-{
-    fprintf(stream, "%ld", x);
-}
+void print1(FILE *stream, const char *s);
+void print1(FILE *stream, char *s);
+void print1(FILE *stream, char c);
+void print1(FILE *stream, float f);
+void print1(FILE *stream, unsigned long long x);
+void print1(FILE *stream, long unsigned int x);
+void print1(FILE *stream, unsigned int x);
+void print1(FILE *stream, int x);
+void print1(FILE *stream, long int x);
 
 template <typename ... Types>
 void print(FILE *stream, Types... args)
@@ -932,10 +637,7 @@ void print(FILE *stream, Types... args)
     (print1(stream, args), ...);
 }
 
-void print1(FILE *stream, bool b)
-{
-    print1(stream, b ? "true" : "false");
-}
+void print1(FILE *stream, bool b);
 
 template <typename T>
 void print1(FILE *stream, Maybe<T> maybe)
@@ -983,55 +685,10 @@ T unwrap_or_panic(Maybe<T> maybe, Args... args)
     return maybe.unwrap;
 }
 
-void print1(FILE *stream, Escape escape)
-{
-    for (size_t i = 0; i < escape.unwrap.count; ++i) {
-        switch (escape.unwrap.data[i]) {
-        case '\a':
-            print(stream, "\\a");
-            break;
-        case '\b':
-            print(stream, "\\b");
-            break;
-        case '\f':
-            print(stream, "\\f");
-            break;
-        case '\n':
-            print(stream, "\\n");
-            break;
-        case '\r':
-            print(stream, "\\r");
-            break;
-        case '\t':
-            print(stream, "\\t");
-            break;
-        case '\v':
-            print(stream, "\\v");
-            break;
-        default:
-            print(stream, escape.unwrap.data[i]);
-        }
-    }
-}
-
-void print1(FILE *stream, Pad pad)
-{
-    for (size_t i = 0; i < pad.n; ++i) {
-        fputc(pad.c, stream);
-    }
-}
-
-void print1(FILE *stream, Caps caps)
-{
-    for (size_t i = 0; i < caps.unwrap.count; ++i) {
-        print1(stream, (char) toupper(caps.unwrap.data[i]));
-    }
-}
-
-void print1(FILE *stream, String_Buffer buffer)
-{
-    print1(stream, buffer.view());
-}
+void print1(FILE *stream, Escape escape);
+void print1(FILE *stream, Pad pad);
+void print1(FILE *stream, Caps caps);
+void print1(FILE *stream, String_Buffer buffer);
 
 ////////////////////////////////////////////////////////////
 // UTF-8
@@ -1041,185 +698,46 @@ struct Utf8_Char {
     uint8_t bytes[4];
     size_t count;
 
-    String_View view()
-    {
-        String_View result = {
-            count,
-            reinterpret_cast<const char *>(bytes)
-        };
-
-        return result;
-    }
+    String_View view();
 };
 
-void print1(FILE *stream, Utf8_Char uchar)
-{
-    print(stream, String_View {uchar.count, reinterpret_cast<const char*>(uchar.bytes)});
-}
+void print1(FILE *stream, Utf8_Char uchar);
 
-Utf8_Char code_to_utf8(uint32_t code)
-{
-    if (/*0x0000 <= code && */code <= 0x007F) {
-        // 0xxxxxxx
-        // 1 byte
-        return Utf8_Char {
-            {(uint8_t) code, 0, 0, 0},
-            1,
-        };
-    } else if (0x0080 <= code && code <= 0x07FF) {
-        // 110xxxxx 10xxxxxx
-        // 2 bytes
-        return Utf8_Char {
-            {
-                (uint8_t) (((code & 0b00111111000000) >> 6) | 0b11000000),
-                (uint8_t) (((code & 0b00000000111111) >> 0) | 0b10000000),
-                0,
-                0
-            },
-            2
-        };
-    } else if (0x0800 <= code && code <= 0xFFFF) {
-        // 3 bytes
-        // 1110xxxx 10xxxxxx 10xxxxxx
-        return Utf8_Char {
-            {
-                (uint8_t) (((code & 0b1111000000000000) >> 12) | 0b11100000),
-                (uint8_t) (((code & 0b0000111111000000) >> 6)  | 0b10000000),
-                (uint8_t) (((code & 0b0000000000111111) >> 0)  | 0b10000000),
-                0
-            },
-            3
-        };
-    } else if (0x10000 <= code && code <= 0x10FFFF) {
-        // 4 bytes
-        // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-        return Utf8_Char {
-            {
-                (uint8_t) (((code & 0b111000000000000000000) >> 18) | 0b11110000),
-                (uint8_t) (((code & 0b000111111000000000000) >> 12) | 0b10000000),
-                (uint8_t) (((code & 0b000000000111111000000) >> 6)  | 0b10000000),
-                (uint8_t) (((code & 0b000000000000000111111) >> 0)  | 0b10000000),
-            },
-            4
-        };
-    }
-
-    panic("The code ", code, " point is too big");
-}
-
-Maybe<uint32_t> utf8_get_code(String_View view, size_t *size)
-{
-    const uint8_t UTF8_1BYTE_MASK      = 1 << 7;
-    const uint8_t UTF8_2BYTES_MASK     = 1 << 5;
-    const uint8_t UTF8_3BYTES_MASK     = 1 << 4;
-    const uint8_t UTF8_4BYTES_MASK     = 1 << 3;
-    const uint8_t UTF8_EXTRA_BYTE_MASK = 1 << 6;
-
-    if (view.count >= 1 &&
-            (*view.data & UTF8_1BYTE_MASK) == 0) {
-        *size = 1;
-        return some(static_cast<uint32_t>(*view.data));
-    }
-
-    if (view.count >= 2 &&
-            (view.data[0] & UTF8_2BYTES_MASK) == 0 &&
-            (view.data[1] & UTF8_EXTRA_BYTE_MASK) == 0) {
-        *size = 2;
-        const auto byte1 = static_cast<uint32_t>((view.data[0] & (UTF8_2BYTES_MASK - 1)) << 6);
-        const auto byte2 = static_cast<uint32_t>(view.data[1] & (UTF8_EXTRA_BYTE_MASK - 1));
-        return some(byte1 | byte2);
-    }
-
-    if (view.count >= 3 &&
-            (view.data[0] & UTF8_3BYTES_MASK) == 0 &&
-            (view.data[1] & UTF8_EXTRA_BYTE_MASK) == 0 &&
-            (view.data[2] & UTF8_EXTRA_BYTE_MASK) == 0) {
-        *size = 3;
-        const auto byte1 = static_cast<uint32_t>((view.data[0] & (UTF8_3BYTES_MASK - 1)) << (6 * 2));
-        const auto byte2 = static_cast<uint32_t>((view.data[1] & (UTF8_EXTRA_BYTE_MASK - 1)) << 6);
-        const auto byte3 = static_cast<uint32_t>(view.data[2] & (UTF8_EXTRA_BYTE_MASK - 1));
-        return some(byte1 | byte2 | byte3);
-    }
-
-    if (view.count >= 4 &&
-            (view.data[0] & UTF8_4BYTES_MASK) == 0 &&
-            (view.data[1] & UTF8_EXTRA_BYTE_MASK) == 0 &&
-            (view.data[2] & UTF8_EXTRA_BYTE_MASK) == 0 &&
-            (view.data[3] & UTF8_EXTRA_BYTE_MASK) == 0) {
-        *size = 4;
-        const auto byte1 = static_cast<uint32_t>((view.data[0] & (UTF8_3BYTES_MASK - 1)) << (6 * 3));
-        const auto byte2 = static_cast<uint32_t>((view.data[1] & (UTF8_EXTRA_BYTE_MASK - 1)) << (6 * 2));
-        const auto byte3 = static_cast<uint32_t>((view.data[2] & (UTF8_EXTRA_BYTE_MASK - 1)) << 6);
-        const auto byte4 = static_cast<uint32_t>(view.data[3] & (UTF8_EXTRA_BYTE_MASK - 1));
-        return some(byte1 | byte2 | byte3 | byte4);
-    }
-
-    return {};
-}
+Utf8_Char code_to_utf8(uint32_t code);
+Maybe<uint32_t> utf8_get_code(String_View view, size_t *size);
 
 template <typename T>
 struct Hex {
     T unwrap;
 };
 
-void print1(FILE *stream, Hex<uint32_t> hex)
-{
-    fprintf(stream, "%x", hex.unwrap);
-}
-
-void print1(FILE *stream, Hex<char> hex)
-{
-    fprintf(stream, "%hhx", hex.unwrap);
-}
+void print1(FILE *stream, Hex<uint32_t> hex);
+void print1(FILE *stream, Hex<char> hex);
 
 template <typename T>
 struct HEX {
     T unwrap;
 };
 
-void print1(FILE *stream, HEX<uint32_t> hex)
-{
-    fprintf(stream, "%X", hex.unwrap);
-}
-
-void print1(FILE *stream, HEX<char> hex)
-{
-    fprintf(stream, "%hhX", hex.unwrap);
-}
+void print1(FILE *stream, HEX<uint32_t> hex);
+void print1(FILE *stream, HEX<char> hex);
 
 struct Hex_Bytes {
     String_View unwrap;
 };
 
-void print1(FILE *stream, Hex_Bytes hex_bytes)
-{
-    print(stream, "[");
-    for (size_t i = 0; i < hex_bytes.unwrap.count; ++i) {
-        print(stream, i == 0 ? "" : ", ", Hex<char> { hex_bytes.unwrap.data[i] });
-    }
-    print(stream, "]");
-}
+void print1(FILE *stream, Hex_Bytes hex_bytes);
 
 struct Newline {};
 
-void print1(FILE *stream, Newline)
-{
-    print(stream, '\n');
-}
+void print1(FILE *stream, Newline);
 
 ////////////////////////////////////////////////////////////
 // Hash_Map
 ////////////////////////////////////////////////////////////
 
 // NOTE: stolen from http://www.cse.yorku.ca/~oz/hash.html
-unsigned long hash(String_View str)
-{
-    unsigned long hash = 5381;
-    for (size_t i = 0; i < str.count; ++i) {
-        hash = ((hash << 5) + hash) + str.data[i];
-    }
-    return hash;
-}
+unsigned long hash(String_View str);
 
 template <typename Key, typename Value>
 struct Hash_Map {
@@ -1329,3 +847,588 @@ void destroy(Hash_Map<Key, Value> hash_map)
 }
 
 #endif  // AIDS_HPP_
+
+#ifdef AIDS_IMPLEMENTATION
+
+namespace aids
+{
+
+Mtor mtor;
+
+[[nodiscard]]
+String_View String_View::trim_begin(void) const
+{
+    String_View view = *this;
+
+    while (view.count != 0 && isspace(*view.data)) {
+        view.data  += 1;
+        view.count -= 1;
+    }
+    return view;
+}
+
+[[nodiscard]]
+String_View String_View::trim_end(void) const
+{
+    String_View view = *this;
+
+    while (view.count != 0 && isspace(*(view.data + view.count - 1))) {
+        view.count -= 1;
+    }
+    return view;
+}
+
+[[nodiscard]]
+String_View String_View::trim(void) const
+{
+    return trim_begin().trim_end();
+}
+
+void String_View::chop_back(size_t n)
+{
+    count -= n < count ? n : count;
+}
+
+void String_View::chop(size_t n)
+{
+    if (n > count) {
+        data += count;
+        count = 0;
+    } else {
+        data  += n;
+        count -= n;
+    }
+}
+
+void String_View::grow(size_t n)
+{
+    count += n;
+}
+
+String_View String_View::chop_while(Predicate_Char predicate)
+{
+    size_t size = 0;
+    while (size < count && predicate(data[size])) {
+        size += 1;
+    }
+
+    auto result = subview(0, size);
+    chop(size);
+    return result;
+}
+
+String_View String_View::chop_by_delim(char delim)
+{
+    assert(data);
+
+    size_t i = 0;
+    while (i < count && data[i] != delim) i++;
+    String_View result = {i, data};
+    chop(i + 1);
+
+    return result;
+}
+
+String_View String_View::chop_word(void)
+{
+    *this = trim_begin();
+
+    size_t i = 0;
+    while (i < count && !isspace(data[i])) i++;
+
+    String_View result = { i, data };
+
+    count -= i;
+    data  += i;
+
+    return result;
+}
+
+Maybe<float> String_View::as_float() const
+{
+    char buffer[300] = {};
+    memcpy(buffer, data, min(sizeof(buffer) - 1, count));
+    char *endptr = NULL;
+    float result = strtof(buffer, &endptr);
+
+    if (buffer > endptr || (size_t) (endptr - buffer) != count) {
+        return {};
+    }
+
+    return some(result);
+}
+
+String_View String_View::subview(size_t start, size_t count) const
+{
+    if (start + count <= this->count) {
+        return {count, data + start};
+    }
+
+    return {};
+}
+
+bool String_View::operator<(String_View b) const
+{
+    auto a = *this;
+    while (a.count > 0 && b.count > 0) {
+        if (*a.data != *b.data) {
+            return *a.data < *b.data;
+        }
+        a.chop(1);
+        b.chop(1);
+    }
+
+    return a.count < b.count;
+}
+
+bool String_View::operator==(String_View view) const
+{
+    if (this->count != view.count) return false;
+    return memcmp(this->data, view.data, this->count) == 0;
+}
+
+bool String_View::operator!=(String_View view) const
+{
+    return !(*this == view);
+}
+
+bool String_View::has_prefix(String_View prefix) const
+{
+    return prefix.count <= this->count
+           && this->subview(0, prefix.count) == prefix;
+}
+
+bool String_View::has_suffix(String_View suffix) const
+{
+    return suffix.count <= this->count
+           && this->subview(this->count - suffix.count, suffix.count) == suffix;
+}
+
+size_t String_View::count_chars(char x) const
+{
+    size_t result = 0;
+    for (size_t i = 0; i < count; ++i) {
+        if (data[i] == x) {
+            result += 1;
+        }
+    }
+    return result;
+}
+
+String_View operator ""_sv(const char *data, size_t count)
+{
+    return {count, data};
+}
+
+String_View cstr_as_string_view(const char *cstr)
+{
+    return {strlen(cstr), cstr};
+}
+
+void print1(FILE *stream, String_View view)
+{
+    fwrite(view.data, 1, view.count, stream);
+}
+
+void destroy(String_View sv)
+{
+    mtor.dealloc(sv.data, sv.count);
+}
+
+char *Args::shift()
+{
+    char *result = *argv;
+    argv += 1;
+    argc -= 1;
+    return result;
+}
+
+bool Args::empty()
+{
+    return argc == 0;
+}
+
+String_View String_Buffer::view() const
+{
+    return {size, data};
+}
+
+void sprint1(String_Buffer *buffer, const char *cstr)
+{
+    int n = snprintf(
+                buffer->data + buffer->size,
+                buffer->capacity - buffer->size,
+                "%s", cstr);
+    buffer->size = min(buffer->size + n, buffer->capacity - 1);
+}
+
+void sprint1(String_Buffer *buffer, String_View view)
+{
+    int n = snprintf(
+                buffer->data + buffer->size,
+                buffer->capacity - buffer->size,
+                "%.*s", (int) view.count, view.data);
+    buffer->size = min(buffer->size + n, buffer->capacity - 1);
+}
+
+void sprint1(String_Buffer *buffer, char c)
+{
+    int n = snprintf(
+                buffer->data + buffer->size,
+                buffer->capacity - buffer->size,
+                "%c", c);
+    buffer->size = min(buffer->size + n, buffer->capacity - 1);
+}
+
+void sprint1(String_Buffer *buffer, float f)
+{
+    int n = snprintf(
+                buffer->data + buffer->size,
+                buffer->capacity - buffer->size,
+                "%f", f);
+    buffer->size = min(buffer->size + n, buffer->capacity - 1);
+}
+
+void sprint1(String_Buffer *buffer, unsigned long long x)
+{
+    int n = snprintf(
+                buffer->data + buffer->size,
+                buffer->capacity - buffer->size,
+                "%llu", x);
+    buffer->size = min(buffer->size + n, buffer->capacity - 1);
+}
+
+void sprint1(String_Buffer *buffer, unsigned int x)
+{
+    int n = snprintf(
+                buffer->data + buffer->size,
+                buffer->capacity - buffer->size,
+                "%u", x);
+    buffer->size = min(buffer->size + n, buffer->capacity - 1);
+}
+
+void sprint1(String_Buffer *buffer, long unsigned int x)
+{
+    int n = snprintf(
+                buffer->data + buffer->size,
+                buffer->capacity - buffer->size,
+                "%lu", x);
+    buffer->size = min(buffer->size + n, buffer->capacity - 1);
+}
+
+void sprint1(String_Buffer *buffer, int x)
+{
+    int n = snprintf(
+                buffer->data + buffer->size,
+                buffer->capacity - buffer->size,
+                "%d", x);
+    buffer->size = min(buffer->size + n, buffer->capacity - 1);
+}
+
+void sprint1(String_Buffer *buffer, long int x)
+{
+    int n = snprintf(
+                buffer->data + buffer->size,
+                buffer->capacity - buffer->size,
+                "%ld", x);
+    buffer->size = min(buffer->size + n, buffer->capacity - 1);
+}
+
+void sprint1(String_Buffer *buffer, bool b)
+{
+    sprint1(buffer, b ? "true" : "false");
+}
+
+void sprint1(String_Buffer *buffer, Pad pad)
+{
+    for (size_t i = 0; i < pad.n; ++i) {
+        sprint1(buffer, pad.c);
+    }
+}
+
+void sprint1(String_Buffer *buffer, Caps caps)
+{
+    for (size_t i = 0; i < caps.unwrap.count; ++i) {
+        sprint1(buffer, (char) toupper(caps.unwrap.data[i]));
+    }
+}
+
+void sprint1(String_Buffer *buffer, String_Buffer another_buffer)
+{
+    sprint1(buffer, another_buffer.view());
+}
+
+////////////////////////////////////////////////////////////
+// PRINT
+////////////////////////////////////////////////////////////
+
+void print1(FILE *stream, const char *s)
+{
+    fwrite(s, 1, strlen(s), stream);
+}
+
+void print1(FILE *stream, char *s)
+{
+    fwrite(s, 1, strlen(s), stream);
+}
+
+void print1(FILE *stream, char c)
+{
+    fputc(c, stream);
+}
+
+void print1(FILE *stream, float f)
+{
+    fprintf(stream, "%f", f);
+}
+
+void print1(FILE *stream, unsigned long long x)
+{
+    fprintf(stream, "%llu", x);
+}
+
+void print1(FILE *stream, long unsigned int x)
+{
+    fprintf(stream, "%lu", x);
+}
+
+void print1(FILE *stream, unsigned int x)
+{
+    fprintf(stream, "%u", x);
+}
+
+void print1(FILE *stream, int x)
+{
+    fprintf(stream, "%d", x);
+}
+
+void print1(FILE *stream, long int x)
+{
+    fprintf(stream, "%ld", x);
+}
+
+void print1(FILE *stream, bool b)
+{
+    print1(stream, b ? "true" : "false");
+}
+
+void print1(FILE *stream, Escape escape)
+{
+    for (size_t i = 0; i < escape.unwrap.count; ++i) {
+        switch (escape.unwrap.data[i]) {
+        case '\a':
+            print(stream, "\\a");
+            break;
+        case '\b':
+            print(stream, "\\b");
+            break;
+        case '\f':
+            print(stream, "\\f");
+            break;
+        case '\n':
+            print(stream, "\\n");
+            break;
+        case '\r':
+            print(stream, "\\r");
+            break;
+        case '\t':
+            print(stream, "\\t");
+            break;
+        case '\v':
+            print(stream, "\\v");
+            break;
+        default:
+            print(stream, escape.unwrap.data[i]);
+        }
+    }
+}
+
+void print1(FILE *stream, Pad pad)
+{
+    for (size_t i = 0; i < pad.n; ++i) {
+        fputc(pad.c, stream);
+    }
+}
+
+void print1(FILE *stream, Caps caps)
+{
+    for (size_t i = 0; i < caps.unwrap.count; ++i) {
+        print1(stream, (char) toupper(caps.unwrap.data[i]));
+    }
+}
+
+void print1(FILE *stream, String_Buffer buffer)
+{
+    print1(stream, buffer.view());
+}
+
+////////////////////////////////////////////////////////////
+// UTF-8
+////////////////////////////////////////////////////////////
+
+String_View Utf8_Char::view()
+{
+    String_View result = {
+        count,
+        reinterpret_cast<const char *>(bytes)
+    };
+
+    return result;
+}
+
+void print1(FILE *stream, Utf8_Char uchar)
+{
+    print(stream, String_View {uchar.count, reinterpret_cast<const char*>(uchar.bytes)});
+}
+
+Utf8_Char code_to_utf8(uint32_t code)
+{
+    if (/*0x0000 <= code && */code <= 0x007F) {
+        // 0xxxxxxx
+        // 1 byte
+        return Utf8_Char {
+            {(uint8_t) code, 0, 0, 0},
+            1,
+        };
+    } else if (0x0080 <= code && code <= 0x07FF) {
+        // 110xxxxx 10xxxxxx
+        // 2 bytes
+        return Utf8_Char {
+            {
+                (uint8_t) (((code & 0b00111111000000) >> 6) | 0b11000000),
+                (uint8_t) (((code & 0b00000000111111) >> 0) | 0b10000000),
+                0,
+                0
+            },
+            2
+        };
+    } else if (0x0800 <= code && code <= 0xFFFF) {
+        // 3 bytes
+        // 1110xxxx 10xxxxxx 10xxxxxx
+        return Utf8_Char {
+            {
+                (uint8_t) (((code & 0b1111000000000000) >> 12) | 0b11100000),
+                (uint8_t) (((code & 0b0000111111000000) >> 6)  | 0b10000000),
+                (uint8_t) (((code & 0b0000000000111111) >> 0)  | 0b10000000),
+                0
+            },
+            3
+        };
+    } else if (0x10000 <= code && code <= 0x10FFFF) {
+        // 4 bytes
+        // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+        return Utf8_Char {
+            {
+                (uint8_t) (((code & 0b111000000000000000000) >> 18) | 0b11110000),
+                (uint8_t) (((code & 0b000111111000000000000) >> 12) | 0b10000000),
+                (uint8_t) (((code & 0b000000000111111000000) >> 6)  | 0b10000000),
+                (uint8_t) (((code & 0b000000000000000111111) >> 0)  | 0b10000000),
+            },
+            4
+        };
+    }
+
+    panic("The code ", code, " point is too big");
+}
+
+Maybe<uint32_t> utf8_get_code(String_View view, size_t *size)
+{
+    const uint8_t UTF8_1BYTE_MASK      = 1 << 7;
+    const uint8_t UTF8_2BYTES_MASK     = 1 << 5;
+    const uint8_t UTF8_3BYTES_MASK     = 1 << 4;
+    const uint8_t UTF8_4BYTES_MASK     = 1 << 3;
+    const uint8_t UTF8_EXTRA_BYTE_MASK = 1 << 6;
+
+    if (view.count >= 1 &&
+            (*view.data & UTF8_1BYTE_MASK) == 0) {
+        *size = 1;
+        return some(static_cast<uint32_t>(*view.data));
+    }
+
+    if (view.count >= 2 &&
+            (view.data[0] & UTF8_2BYTES_MASK) == 0 &&
+            (view.data[1] & UTF8_EXTRA_BYTE_MASK) == 0) {
+        *size = 2;
+        const auto byte1 = static_cast<uint32_t>((view.data[0] & (UTF8_2BYTES_MASK - 1)) << 6);
+        const auto byte2 = static_cast<uint32_t>(view.data[1] & (UTF8_EXTRA_BYTE_MASK - 1));
+        return some(byte1 | byte2);
+    }
+
+    if (view.count >= 3 &&
+            (view.data[0] & UTF8_3BYTES_MASK) == 0 &&
+            (view.data[1] & UTF8_EXTRA_BYTE_MASK) == 0 &&
+            (view.data[2] & UTF8_EXTRA_BYTE_MASK) == 0) {
+        *size = 3;
+        const auto byte1 = static_cast<uint32_t>((view.data[0] & (UTF8_3BYTES_MASK - 1)) << (6 * 2));
+        const auto byte2 = static_cast<uint32_t>((view.data[1] & (UTF8_EXTRA_BYTE_MASK - 1)) << 6);
+        const auto byte3 = static_cast<uint32_t>(view.data[2] & (UTF8_EXTRA_BYTE_MASK - 1));
+        return some(byte1 | byte2 | byte3);
+    }
+
+    if (view.count >= 4 &&
+            (view.data[0] & UTF8_4BYTES_MASK) == 0 &&
+            (view.data[1] & UTF8_EXTRA_BYTE_MASK) == 0 &&
+            (view.data[2] & UTF8_EXTRA_BYTE_MASK) == 0 &&
+            (view.data[3] & UTF8_EXTRA_BYTE_MASK) == 0) {
+        *size = 4;
+        const auto byte1 = static_cast<uint32_t>((view.data[0] & (UTF8_3BYTES_MASK - 1)) << (6 * 3));
+        const auto byte2 = static_cast<uint32_t>((view.data[1] & (UTF8_EXTRA_BYTE_MASK - 1)) << (6 * 2));
+        const auto byte3 = static_cast<uint32_t>((view.data[2] & (UTF8_EXTRA_BYTE_MASK - 1)) << 6);
+        const auto byte4 = static_cast<uint32_t>(view.data[3] & (UTF8_EXTRA_BYTE_MASK - 1));
+        return some(byte1 | byte2 | byte3 | byte4);
+    }
+
+    return {};
+}
+
+void print1(FILE *stream, Hex<uint32_t> hex)
+{
+    fprintf(stream, "%x", hex.unwrap);
+}
+
+void print1(FILE *stream, Hex<char> hex)
+{
+    fprintf(stream, "%hhx", hex.unwrap);
+}
+
+void print1(FILE *stream, HEX<uint32_t> hex)
+{
+    fprintf(stream, "%X", hex.unwrap);
+}
+
+void print1(FILE *stream, HEX<char> hex)
+{
+    fprintf(stream, "%hhX", hex.unwrap);
+}
+
+void print1(FILE *stream, Hex_Bytes hex_bytes)
+{
+    print(stream, "[");
+    for (size_t i = 0; i < hex_bytes.unwrap.count; ++i) {
+        print(stream, i == 0 ? "" : ", ", Hex<char> { hex_bytes.unwrap.data[i] });
+    }
+    print(stream, "]");
+}
+
+void print1(FILE *stream, Newline)
+{
+    print(stream, '\n');
+}
+
+////////////////////////////////////////////////////////////
+// Hash_Map
+////////////////////////////////////////////////////////////
+
+// NOTE: stolen from http://www.cse.yorku.ca/~oz/hash.html
+unsigned long hash(String_View str)
+{
+    unsigned long hash = 5381;
+    for (size_t i = 0; i < str.count; ++i) {
+        hash = ((hash << 5) + hash) + str.data[i];
+    }
+    return hash;
+}
+
+} // namespace aids
+
+#endif // AIDS_IMPLEMENTATION

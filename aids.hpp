@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 1.3.1 — std replacement for C++. Designed to aid developers
+// aids — 1.4.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,7 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   1.4.0  require AIDS_IMPLEMENTATION defined before including aids.hpp
 //   1.3.1  reformat everything with astyle
 //   1.3.0  fix memory leak in read_file_as_string_view()
 //          add operator[] for Dynamic_Array
@@ -122,6 +123,18 @@
 //   Aodhnait Étaín (github:aodhneine)
 //   Jarosław Wiosna (github:JaroslawWiosna)
 //   Danil Kolumbet (github:kolumb)
+
+#ifndef AIDS_IMPLEMENTATION
+#    ifdef _MSC_VER
+#        pragma message ("DEPRECATION NOTICE! Please add #define AIDS_IMPLEMENTATION before including \"aids.hpp\".")
+#        pragma message ("Aids is moving towards being an stb-style header-only library. For more info on what that means check https://raw.githubusercontent.com/nothings/stb/c9064e317699d2e495f36ba4f9ac037e88ee371a/docs/stb_howto.txt")
+#        pragma message ("Basically by default including \"aids.hpp\" does not include the implementations of the functions. To include the implementation you need to define AIDS_IMPLEMENTATION macro.")
+#    else
+#        warning "DEPRECATION NOTICE! Please add #define AIDS_IMPLEMENTATION before including \"aids.hpp\"."
+#        warning "Aids is moving towards being an stb-style header-only library. For more info on what that means check https://raw.githubusercontent.com/nothings/stb/c9064e317699d2e495f36ba4f9ac037e88ee371a/docs/stb_howto.txt"
+#        warning "Basically by default including \"aids.hpp\" does not include the implementations of the functions. To include the implementation you need to define AIDS_IMPLEMENTATION macro."
+#    endif
+#endif
 
 #ifndef AIDS_HPP_
 #define AIDS_HPP_

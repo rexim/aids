@@ -1,3 +1,4 @@
+#define AIDS_IMPLEMENTATION
 #include "aids.hpp"
 
 #ifdef _MSC_VER

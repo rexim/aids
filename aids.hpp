@@ -21,7 +21,7 @@
 //
 // ============================================================
 //
-// aids — 2.1.0 — std replacement for C++. Designed to aid developers
+// aids — 2.2.0 — std replacement for C++. Designed to aid developers
 // to a better programming experience.
 //
 // https://github.com/rexim/aids
@@ -30,6 +30,10 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   2.2.0  add TODO(...) macro
+//          add UNREACHABLE(...) macro
+//          deprecate todo() function
+//          deprecate unreachable() function
 //   2.1.0  add String_View::chop_left()
 //          add String_View::chop_right()
 //          deprecate String_View::chop()
@@ -671,14 +675,18 @@ template <typename... Args>
     exit(1);
 }
 
+#define UNREACHABLE(...) panic(__FILE__, ":", __LINE__, ": unreachable: ", __VA_ARGS__);
+
 template <typename... Args>
-[[noreturn]] void unreachable(Args... args)
+[[noreturn]] [[deprecated("Use UNREACHABLE macro instead")]] void unreachable(Args... args)
 {
     panic("Unreachable: ", args...);
 }
 
+#define TODO(...) panic(__FILE__, ":", __LINE__, ": TODO: ", __VA_ARGS__)
+
 template <typename... Args>
-[[noreturn]] void todo(Args... args)
+[[noreturn]] [[deprecated("Use TODO macro instead")]] void todo(Args... args)
 {
     panic("TODO: ", args...);
 }

@@ -12,7 +12,7 @@ void code_points_of(const char *cstr)
         auto code = utf8_get_code(s, &size);
         if (code.has_value) {
             println(stdout, s.subview(0, size), " => ", code.unwrap);
-            s.chop(size);
+            s.chop_left(size);
         } else {
             assert(cstr <= s.data);
             println(stderr, "STRING CONTAINS INVALID UTF-8 BYTE SEQUENCE AT BYTE INDEX ", (size_t) (s.data - cstr), "!!!");

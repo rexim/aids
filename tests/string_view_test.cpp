@@ -97,5 +97,12 @@ int main(int, char *[])
             ASSERT_EQ(""_sv, bar);
         }
     }
+    // String_View::as_integer<int>
+    {
+        auto year = "2021"_sv;
+        int number = unwrap_or_panic(year.as_integer<int>());
+        number += 1000;
+        ASSERT_EQ(3021, number);
+    }
     return 0;
 }

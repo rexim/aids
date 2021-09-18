@@ -396,7 +396,7 @@ struct String_View {
 
         if (*view.data == '-') {
             sign = -1;
-            view.chop(1);
+            view.chop_left(1);
         }
 
         while (view.count) {
@@ -404,7 +404,7 @@ struct String_View {
                 return {};
             }
             number = number * 10 + (*view.data - '0');
-            view.chop(1);
+            view.chop_left(1);
         }
 
         return { true, number * sign };

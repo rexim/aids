@@ -30,6 +30,8 @@
 //
 // ChangeLog (https://semver.org/ is implied)
 //
+//   2.2.1  fix memory leak in Dynamic_Array::expand_capacity()
+//          fix incorrect copy in Dynamic_Array::expand_capacity()
 //   2.2.0  add TODO(...) macro
 //          add UNREACHABLE(...) macro
 //          deprecate todo() function
@@ -484,13 +486,25 @@ struct Dynamic_Array {
 
     void expand_capacity()
     {
-        size_t new_capacity = data ? 2 * capacity : 256;
-        T *new_data = mtor.alloc<T>(new_capacity);
-
-        memcpy(new_data, data, capacity);
-
-        data = new_data;
-        capacity = new_capacity;
+        const size_t DYNAMIC_ARRAY_INITIAL_CAPACITY = 256;
+        
+        if (data == nullptr) {
+            assert(capacity == 0);
+            assert(size == 0);
+            
+            data = mtor.alloc<T>(DYNAMIC_ARRAY_INITIAL_CAPACITY);
+            capacity = DYNAMIC_ARRAY_INITIAL_CAPACITY;
+            size = 0;
+        } else {
+            size_t new_capacity = 2 * capacity;
+            T *new_data = mtor.alloc<T>(new_capacity);
+                
+            memcpy(new_data, data, capacity * sizeof(T));
+            mtor.dealloc(data, capacity);
+            
+            data = new_data;
+            capacity = new_capacity;
+        }
     }
 
     void push(T item)

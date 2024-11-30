@@ -1373,6 +1373,7 @@ Utf8_Char code_to_utf8(uint32_t code)
     panic("The code ", code, " point is too big");
 }
 
+// TODO: utf8_get_code does not check for overlong sequences and the codes being the UTF-16 surrogate pairs range
 Maybe<uint32_t> utf8_get_code(String_View view, size_t *size)
 {
     const uint8_t UTF8_1BYTE_MASK      = 1 << 7;
